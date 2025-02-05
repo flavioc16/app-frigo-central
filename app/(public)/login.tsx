@@ -10,22 +10,20 @@ import {
   ScrollView,
   Keyboard,
   Platform,
-  useColorScheme
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { AuthContext } from '../../src/context/AuthContext';
-
-
 import { TouchableWithoutFeedbackWrapper } from '@/src/components/TouchableWithoutFeedbackWrapper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useThemeColor } from '@/hooks/useThemeColor';
+import { useTheme } from '../../src/context/ThemeContext';  // Importa o contexto de tema
+import { Colors } from '@/constants/Colors';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { signIn, loadingAuth, user } = useContext(AuthContext);
+  const { signIn, loadingAuth } = useContext(AuthContext);
+  const { theme } = useTheme();  // Acessando o tema do contexto
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -34,15 +32,14 @@ export default function LoginScreen() {
   const usernameRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
 
-  const logoSource = useColorScheme() === 'dark'
+  const logoSource = theme === 'dark'
     ? require('../../assets/images/LOGO-VERMELHO-E-BRANCA.png')  // Logo para o tema escuro
     : require('../../assets/images/LOGO-TODA-VERMELHA.png'); 
 
-  const borderColor = useThemeColor({}, 'border'); // Define a cor da borda
-  const backgroundColor = useThemeColor({}, 'background'); // Define a cor do fundo
-  const textColor = useThemeColor({}, 'text'); // Cor dinâmica do texto
-  const placeholderColor = useThemeColor({}, 'placeholder'); // Cor dinâmica do placeholder
-  const iconColor = useThemeColor({}, 'icon'); // Cor dinâmica do ícone
+  // Acesse as cores do tema dinamicamente
+  const colors = Colors[theme];  
+  // Cores do tema
+  const { border, background, text, placeholder, icon } = colors;
 
   async function handleLogin() {
     setErrorMessage(null);
@@ -68,8 +65,6 @@ export default function LoginScreen() {
       const userInfo = await AsyncStorage.getItem('@frigorifico');
       if (userInfo) {
         const parsedUser = JSON.parse(userInfo);
-  
-        // Verifica o tipo de usuário (USER ou ADMIN)
         if (parsedUser?.role) {
           if (parsedUser.role === 'USER') {
             // Salva as informações do cliente (incluindo o client) para usuários
@@ -79,7 +74,6 @@ export default function LoginScreen() {
             }
             router.replace('/(auth)/(tabs)/home');  // Caminho para área de cliente
           } else if (parsedUser.role === 'ADMIN') {
-            // Não há cliente para o admin, só salva as informações do usuário
             await AsyncStorage.setItem('@cliente', JSON.stringify({}));  // Salva um objeto vazio para admin
             router.replace('/(auth-admin)/(tabs)/home');  // Caminho para área de admin
           } else {
@@ -96,12 +90,9 @@ export default function LoginScreen() {
       setErrorMessage(error);
     }
   }
-  
+
   return (
-    <ThemedView style={[
-      styles.container, 
-      Platform.OS === 'ios' && { paddingBottom: 100 },
-      { overflow: 'hidden',}]}> 
+    <View style={[styles.container, { backgroundColor: background, overflow: 'hidden', paddingBottom: Platform.OS === 'ios' ? 100 : 0 }]}> 
       <KeyboardAvoidingView
          style={{ flex: 1 }}
          behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'position' : undefined}
@@ -112,7 +103,7 @@ export default function LoginScreen() {
           keyboardDismissMode="on-drag"
         >
           <TouchableWithoutFeedbackWrapper onPress={Keyboard.dismiss}>
-            <ThemedView style={styles.container}>
+            <View style={styles.container}>
               <View style={styles.containerImage}>
                 <Image
                   style={styles.logo}
@@ -125,36 +116,29 @@ export default function LoginScreen() {
                 <FontAwesome
                   name="user"
                   size={20}
-                  color={useThemeColor({ light: '#000', dark: '#fff' }, 'icon')} // Ícone dinâmico com base no tema
+                  color={icon}  // Cor dinâmica do ícone
                   style={styles.eyeButton}
                 />
                 <TextInput
                   ref={usernameRef}
-                  style={[
-                    styles.input,
-                    { borderColor: borderColor, color: textColor }, // Aplica a borda e o texto dinâmico
-                  ]}
+                  style={[styles.input, { borderColor: border, color: text }]}
                   autoCapitalize="none"
                   placeholder="Usuário"
                   value={username}
                   onChangeText={setUsername}
-                  placeholderTextColor={placeholderColor} // Cor dinâmica para o placeholder
+                  placeholderTextColor={placeholder} // Cor dinâmica para o placeholder
                 />
               </View>
               
               <View style={styles.passwordContainer}>
                 <TextInput
                   ref={passwordRef}
-                  style={[
-                    styles.input,
-                    styles.passwordInput,
-                    { borderColor: borderColor, color: textColor },  
-                  ]}
+                  style={[styles.input, styles.passwordInput, { borderColor: border, color: text }]}
                   placeholder="Senha"
                   secureTextEntry={!isPasswordVisible}
                   value={password}
                   onChangeText={setPassword}
-                  placeholderTextColor={placeholderColor} // Placeholder dinâmico
+                  placeholderTextColor={placeholder} // Placeholder dinâmico
                 />
                 <TouchableOpacity
                   onPress={() => setIsPasswordVisible(!isPasswordVisible)}
@@ -163,7 +147,7 @@ export default function LoginScreen() {
                   <FontAwesome
                     name={password === '' ? 'lock' : isPasswordVisible ? 'eye' : 'eye-slash'}
                     size={24}
-                    color={useThemeColor({ light: '#000', dark: '#fff' }, 'icon')}
+                    color={icon}  // Cor dinâmica do ícone
                   />
                 </TouchableOpacity>
               </View>
@@ -176,7 +160,7 @@ export default function LoginScreen() {
                 {loadingAuth ? (
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
-                  <ThemedText type="defaultSemiBold" style={styles.buttonText} >
+                  <ThemedText type="defaultSemiBold" style={styles.buttonText}>
                     Entrar
                   </ThemedText>
                 )}
@@ -185,11 +169,11 @@ export default function LoginScreen() {
               {errorMessage && (
                 <ThemedText type="defaultSemiBold" style={[styles.errorText, { color: '#ff4d4d' }]}>{errorMessage}</ThemedText>
               )}
-            </ThemedView>
+            </View>
           </TouchableWithoutFeedbackWrapper>
         </ScrollView>
       </KeyboardAvoidingView>
-    </ThemedView>
+    </View>
   );
 }
 
@@ -201,8 +185,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   containerImage: {
-    marginTop : 10,
+    marginTop: 10,
     alignItems: 'center',
+  },
+  logo: {
+    width: 400,
+    height: 150,
+  },
+  button: {
+    width: '100%',
+    backgroundColor: '#ae2121', // Cor de fundo para o botão
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#7e1a1a',
   },
   buttonText: {
     color: '#fff',
@@ -214,26 +212,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
-    color: '#fff',
     fontSize: 16,
     width: '100%',
   },
   passwordInput: {
     paddingRight: 40,
-  },
-  logo: {
-    width: 400,
-    height: 150,
-  },
-  button: {
-    width: '100%',
-    backgroundColor: '#ae2121',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-  },
-  disabledButton: {
-    backgroundColor: '#7e1a1a',
   },
   usernameContainer: {
     flexDirection: 'row',

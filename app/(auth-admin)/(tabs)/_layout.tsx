@@ -3,33 +3,31 @@ import React from 'react';
 import { Platform } from 'react-native';
 import { HapticTab } from '@/components/HapticTab';
 import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
 import { useTheme } from '../../../src/context/ThemeContext'; // Importa o contexto de tema
-
 import { House, User, ScanBarcode, Bell, CalendarCheck, HandCoins } from 'lucide-react-native';
 
 export default function TabLayout() {
-  const { theme } = useTheme(); // Obtém o tema atual do contexto
-  const themeColors = Colors[theme] ?? Colors.light; // Define as cores baseadas no tema
+  const { theme, colors } = useTheme(); // Obtém o tema atual do contexto e as cores do tema
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: themeColors.tint, // Aplica a cor de destaque baseada no tema
-        tabBarInactiveTintColor: themeColors.icoTab, // Cor do ícone quando inativo
+        tabBarActiveTintColor: colors.tint, 
+        tabBarInactiveTintColor: theme === 'dark' ? colors.tabIconDefaultDark : colors.tabIconDefault,
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
           ios: {
             position: 'absolute',
-            backgroundColor: themeColors.backgroundTab,
+            backgroundColor: theme === 'dark' ? colors.backgroundDarkTab : colors.backgroundTab, // Usa as cores do contexto de tema
           },
           default: {
-            backgroundColor: themeColors.backgroundTab,
+            backgroundColor: theme === 'dark' ? colors.backgroundDarkTab : colors.backgroundTab, // Usa as cores do contexto de tema
           },
         }),
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="home"
         options={{
