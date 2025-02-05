@@ -1,58 +1,31 @@
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { useTheme } from '../../../src/context/ThemeContext'; // Importa o contexto de tema
+import { StyleSheet, Text, View } from 'react-native';
+import ThemedClientItem from '@/components/ThemedClientItem';
+import { useTheme } from '../../../src/context/ThemeContext'; // Importando o contexto de tema
+import { Colors } from '../../../constants/Colors';  // Verifique se o caminho está correto
 
-export default function TabOneScreen() {
-  const { theme, colors, toggleTheme } = useTheme(); // Obtém o tema e as cores
+export default function ClientScreen() {
+  const { theme } = useTheme(); // Obtém o tema do contexto
+  const colors = Colors[theme] || Colors.light; // Garantir que sempre haja um fallback
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
-        <ThemedView style={styles.titleContainer}>
-          <ThemedText type="defaultSemiBold" style={{ fontSize: 20 }}>
-            Relatórios
-          </ThemedText>
-        </ThemedView>
-
-        {/* Exibe o tema atual */}
-        <ThemedText type="defaultSemiBold" style={{ marginTop: 10 }}>
-          Tema atual: {theme}
-        </ThemedText>
-
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.buttonBackground }]}
-          onPress={toggleTheme}
-        >
-          <ThemedText type="defaultSemiBold" style={{ color: colors.buttonText }}>
-            Mudar Tema
-          </ThemedText>
-        </TouchableOpacity>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.titleContainer}>
+        <Text style={{ fontSize: 20, color: colors.text , fontWeight: 'bold'}}>
+          Relatórios
+        </Text>
       </View>
-    </ThemedView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 16,
   },
-  content: {
-    width: '100%',
-    alignItems: 'center',
-  },
   titleContainer: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginTop: '10%',
     borderBottomEndRadius: 10,
-  },
-  button: {
-    marginTop: 20,
-    padding: 10,
-    borderRadius: 5,
   },
 });

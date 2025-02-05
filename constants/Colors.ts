@@ -22,7 +22,12 @@ export const Colors = {
     buttonText: '#fff', 
     success: '#4caf50', 
     error: '#f44336', 
-    warning: '#ff9800', 
+    warning: '#ff9800',
+    
+    // Adicionando as novas cores para o Switch
+    switchTrackFalse: '#ccc',  // Cor para o estado "off"
+    switchTrackTrue: '#4cd137', // Cor para o estado "on"
+    switchThumb: '#fff',        // Cor da bolinha
   },
   dark: {
     text: '#ECEDEE',
@@ -30,7 +35,7 @@ export const Colors = {
     backgroundTab: 'rgba(255, 255, 255, 0.01)',
     backgroundDarkTab: 'rgba(255, 255, 255, 0.01)',
     background: '#0D0F16', //DEFINE A COR SE FOR NO MODO ESCURO E A COR BRANCA NAO DA PRA VER A HORA
-    cardBackground: '#2A2D35' , 
+    cardBackground: '#2A2D35', 
     tint: tintColorRed,
     icon: '#9BA1A6', //COR DOS ICONES DE DENTRO DO CARD
     tabIconDefault: '#9BA1A6',
@@ -44,5 +49,10 @@ export const Colors = {
     success: '#4caf50',
     error: '#f44336',
     warning: '#ff9800',
+    
+    // Adicionando as novas cores para o Switch
+    switchTrackFalse: '#555',  // Cor para o estado "off"
+    switchTrackTrue: '#4cd137', // Cor para o estado "on"
+    switchThumb: '#fff',        // Cor da bolinha
   },
 };

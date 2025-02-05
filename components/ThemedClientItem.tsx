@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import { FlatList, View, ActivityIndicator, Text, StyleSheet, TextInput, TouchableOpacity, Pressable } from 'react-native';
-import { X, Search, Tag, MapPin, ChevronRight } from "lucide-react-native";
+import { X, Search, Tag, MapPin, ChevronRight, Plus , EllipsisVertical } from "lucide-react-native";
 import { api } from '../src/services/api';
 import { ThemedView } from './ThemedView';
 import { ThemedText } from './ThemedText'; 
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useTheme } from '../src/context/ThemeContext'; // Importa o contexto de tema
 import { Colors } from '../constants/Colors'; // Importa as cores definidas
 
@@ -86,6 +86,22 @@ export default function ThemedClientItem() {
         )}
       </ThemedView>
 
+
+      <TouchableOpacity style={[styles.addClientContainer, { backgroundColor: colors.inputBackground }]}
+        onPress={() => router.push(`/(auth-admin)/client/modal`)}
+        >
+        <Link href="/(auth-admin)/client/modal" style={styles.plusButton}>
+          <View style={[styles.addClientContent, { flexDirection: 'row', alignItems: 'center' }]}>
+            <Plus size={24} color={colors.success} />
+            <ThemedText style={[styles.addClientText, { color: colors.success }]}>Cadastrar Cliente</ThemedText>
+          </View>
+        </Link>
+        <ChevronRight size={25} color={colors.icon} style={styles.chevronIconButtonAdd} 
+          onPress={() => router.push(`/(auth-admin)/client/modal`)}
+        />
+      </TouchableOpacity>
+
+
       {filteredClients.length === 0 && search.length > 0 ? (
         <ThemedText style={[styles.noResults, { color: colors.text }]}>Nenhum cliente encontrado.</ThemedText>
       ) : (
@@ -118,9 +134,8 @@ export default function ThemedClientItem() {
               </View>
             
               <TouchableOpacity onPress={() => router.push(`/(auth-admin)/client/${item.id}`)}>
-                <ChevronRight size={25} color={colors.icon} style={styles.chevronIcon} />
+                <EllipsisVertical size={25} color={colors.icon} style={styles.chevronIcon} />
               </TouchableOpacity>
-
             </Pressable>
           )}
           ListFooterComponent={<View style={{ height: 75 }} />}
@@ -142,23 +157,41 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderRadius: 8,
     paddingHorizontal: 10,
-    margin: 10,
+    marginBottom: 9,
+    marginStart: 10,
+    marginEnd: 10,
     height: 40,
   },
-  inputContainer: {
-    flex: 1,
+  addClientContainer: {
+    marginTop: 1,
+    flexDirection: "row",  // Alinha horizontalmente os elementos
+    alignItems: "center",  // Alinha verticalmente os elementos no centro
     borderRadius: 8,
-    height: '100%',
-    justifyContent: 'center',
     paddingHorizontal: 10,
+    marginBottom: 10,
+    marginStart: 10,
+    marginEnd: 10,
+    height: 50,
+    justifyContent: 'space-between',  // Coloca o conteúdo à esquerda e a seta à direita
   },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    paddingVertical: 8,
+  plusButton: {
+    flexDirection: 'row',  // Exibe os elementos lado a lado
+    alignItems: 'center',
+    flex: 1,  // Ocupa o espaço disponível
   },
-  clearButton: {
-    padding: 5,
+  addClientContent: {
+    flexDirection: 'row',  // Coloca o Plus e o texto lado a lado
+    alignItems: 'center',  // Alinha verticalmente os itens
+  },
+  addClientText: {
+    fontSize: 17,
+    marginLeft: 8,  // Adiciona um espaço entre o ícone e o texto
+  },
+  chevronIcon: {
+    marginLeft: 10,  // Dá um pequeno espaçamento entre o texto e a seta
+  },
+  chevronIconButtonAdd: {
+    marginLeft: '50%',
   },
   clientContainer: {
     padding: 12,
@@ -171,6 +204,21 @@ const styles = StyleSheet.create({
   },
   clientInfo: {
     flex: 1,
+  },
+  inputContainer: {
+    flex: 1,
+    borderRadius: 8,
+    height: '100%',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 8,
+  }, 
+  clearButton: {
+    padding: 5,
   },
   name: {
     marginBottom: 4,
@@ -186,9 +234,6 @@ const styles = StyleSheet.create({
   info: {
     fontSize: 14,
   },
-  chevronIcon: {
-    marginRight: 5,
-  },
   error: {
     textAlign: 'center',
     marginTop: 10,
@@ -202,5 +247,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },  
+  },
 });

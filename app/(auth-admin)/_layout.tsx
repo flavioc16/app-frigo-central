@@ -1,18 +1,18 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { ThemeProvider } from '@react-navigation/native';
+import { useTheme } from '../../src/context/ThemeContext'; // Importando o contexto de tema
 import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { DarkTheme, DefaultTheme } from '@react-navigation/native';
 
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
+  const { theme } = useTheme(); // Usando o hook de tema do contexto
   const [loaded] = useFonts({
     SpaceMono: require('../../assets/fonts/SpaceMono-Regular.ttf')
   });
@@ -27,14 +27,17 @@ export default function RootLayout() {
     return null;
   }
 
+  // Define o tema do react-navigation com base no tema global
+  const navigationTheme = theme === 'dark' ? DarkTheme : DefaultTheme;
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={navigationTheme}>
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: colorScheme === 'dark' ? '#0d0f16' : '#ffffff',
+            backgroundColor: theme === 'dark' ? '#0d0f16' : '#ffffff', // Cor do cabeçalho com base no tema
           },
-          headerTintColor: colorScheme === 'dark' ? '#ffffff' : '#000000',
+          headerTintColor: theme === 'dark' ? '#ffffff' : '#000000', // Cor do texto do cabeçalho
           headerTitleStyle: {
             fontWeight: 'bold',
           },
@@ -43,7 +46,7 @@ export default function RootLayout() {
         <Stack.Screen 
           name="(tabs)" 
           options={{
-            title: 'Inicio', 
+            title: 'Clientes', 
             headerShown: false 
           }} />
         <Stack.Screen
@@ -57,11 +60,19 @@ export default function RootLayout() {
           name="client/[id]"
           options={{
             headerShown: true,
-            title: 'Informações do Cliente',
+            title: 'Detalhes do Cliente',
+          }}
+        />
+        <Stack.Screen
+          name="client/modal"
+          options={{
+            headerShown: true,
+            title: 'Cadastrar Cliente',
+            presentation: 'modal', 
           }}
         />
       </Stack>
-      <StatusBar style="auto"  />
+      <StatusBar style="auto" />
     </ThemeProvider>
   );
 }

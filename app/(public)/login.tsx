@@ -67,7 +67,7 @@ export default function LoginScreen() {
         const parsedUser = JSON.parse(userInfo);
         if (parsedUser?.role) {
           if (parsedUser.role === 'USER') {
-            // Salva as informações do cliente (incluindo o client) para usuários
+        
             const clientInfo = parsedUser.client?.[0];  // Pega o primeiro cliente (no caso de um array)
             if (clientInfo) {
               await AsyncStorage.setItem('@cliente', JSON.stringify(clientInfo));  // Salva o cliente na AsyncStorage

@@ -5,7 +5,7 @@ import { Colors } from '../../constants/Colors';
 
 interface ThemeContextProps {
   theme: 'light' | 'dark';
-  colors: typeof Colors.light; 
+  colors: typeof Colors.light;
   toggleTheme: () => void;
 }
 
@@ -13,22 +13,30 @@ const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const systemScheme = useColorScheme(); 
-  const [theme, setTheme] = useState<'light' | 'dark'>(systemScheme === 'dark' ? 'dark' : 'light');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     const loadTheme = async () => {
       const savedTheme = await AsyncStorage.getItem('@theme');
       if (savedTheme) {
+        // Se houver tema salvo, usamos ele
         setTheme(savedTheme as 'light' | 'dark');
+      } else {
+        // Caso não haja tema salvo, usamos o tema do sistema
+        const defaultTheme = systemScheme === 'dark' ? 'dark' : 'light';
+        setTheme(defaultTheme);
+        // Salva o tema do sistema no AsyncStorage, caso seja o primeiro acesso
+        await AsyncStorage.setItem('@theme', defaultTheme);
       }
     };
+
     loadTheme();
-  }, []);
+  }, [systemScheme]); // Recarrega o tema sempre que o sistema mudar
 
   const toggleTheme = async () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
-    await AsyncStorage.setItem('@theme', newTheme);
+    await AsyncStorage.setItem('@theme', newTheme); // Salva a escolha do usuário no AsyncStorage
   };
 
   return (
