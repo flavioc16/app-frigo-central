@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import ThemedClientItem from '@/components/ThemedClientItem';
+import ThemedClientItem from '@/app/(auth-admin)/client/components/ThemedClientItem';
 import { useTheme } from '../../../src/context/ThemeContext'; // Importando o contexto de tema
 import { Colors } from '../../../constants/Colors';  // Verifique se o caminho está correto
 
@@ -10,7 +10,7 @@ export default function ClientScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.titleContainer}>
-        <Text style={{ fontSize: 20, color: colors.text , fontWeight: 'bold'}}>
+        <Text style={{ fontSize: 20, color: colors.text , fontWeight: 'bold', marginBottom: 10}}>
           Clientes
         </Text>
       </View>

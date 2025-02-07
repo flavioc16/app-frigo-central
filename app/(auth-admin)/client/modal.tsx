@@ -2,6 +2,8 @@ import { StyleSheet, Text, TextInput, View, TouchableOpacity } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../../src/context/ThemeContext';
 import { useState } from 'react';
+import { useRouter } from 'expo-router'; // Importando o useRouter para navegação
+import { api } from '../../../src/services/api';
 
 // Tipagem do Client conforme o modelo fornecido
 export interface Client {
@@ -35,6 +37,8 @@ export default function ClientModalScreen({ onSubmit }: ClientModalScreenProps) 
   const { theme, colors } = useTheme();
   const insets = useSafeAreaInsets();
 
+  const router = useRouter(); // Hook de navegação
+
   const [name, setName] = useState('');
   const [reference, setReference] = useState('');
   const [address, setAddress] = useState('');
@@ -43,7 +47,7 @@ export default function ClientModalScreen({ onSubmit }: ClientModalScreenProps) 
   const [username, setUsername] = useState<string | undefined>();
   const [password, setPassword] = useState('');
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     const clientData: Client = {
       id: '',  // Geralmente o ID seria gerado pelo backend
       nome: name,
@@ -56,7 +60,17 @@ export default function ClientModalScreen({ onSubmit }: ClientModalScreenProps) 
       user: undefined, 
     };
 
-    onSubmit(clientData);  // Envia os dados para a função passada via prop
+    try {
+      // Envia o cliente para o backend (se necessário)
+      // await api.post('/clients', clientData); // Ajuste conforme sua API
+
+      router.replace('/(auth-admin)/(tabs)/client');
+
+ 
+
+    } catch (error) {
+      console.error('Erro ao cadastrar cliente:', error);
+    }
   };
 
   return (

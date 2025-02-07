@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { StatusBar as RNStatusBar, Platform } from 'react-native';  // Importa o StatusBar do React Native
+import { StatusBar as RNStatusBar, Platform } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider } from '../src/context/AuthContext';
-import { ThemeProvider, useTheme } from '../src/context/ThemeContext'; // Usando o tema personalizado
+import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GestureHandlerRootView } from 'react-native-gesture-handler'; 
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet'; 
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,11 +26,15 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <AppNavigator />
-      </ThemeProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}> 
+      <BottomSheetModalProvider> 
+        <AuthProvider>
+          <ThemeProvider>
+            <AppNavigator />
+          </ThemeProvider>
+        </AuthProvider>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -65,18 +71,13 @@ function AppNavigator() {
     }
   };
 
-  // Atualiza o StatusBar quando o tema mudar
   useEffect(() => {
-    RNStatusBar.setBarStyle(theme === 'light' ? 'dark-content' : 'light-content'); // Altera o estilo do ícone da StatusBar
+    RNStatusBar.setBarStyle(theme === 'light' ? 'dark-content' : 'light-content');
 
     if (Platform.OS === 'android') {
-      RNStatusBar.setBackgroundColor(colors.background); // Atualiza a cor de fundo da StatusBar apenas no Android
+      RNStatusBar.setBackgroundColor(colors.background);
     }
   }, [theme, colors]);
 
-  return (
-    <>
-      <Stack screenOptions={{ headerShown: false }} />
-    </>
-  );
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

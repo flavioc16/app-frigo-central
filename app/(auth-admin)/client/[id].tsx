@@ -3,9 +3,10 @@ import { Text, StyleSheet, ActivityIndicator, View } from 'react-native';
 import { useEffect, useState } from 'react';
 import { api } from '../../../src/services/api';
 import { ThemedView } from '@/components/ThemedView';
-import { ThemedText } from '@/components/ThemedText';
-import { useTheme } from '../../../src/context/ThemeContext'; // Importando o contexto de tema
-import { Colors } from '../../../constants/Colors'; // Verifique se o caminho está correto
+import { useTheme } from '../../../src/context/ThemeContext'; 
+import { Colors } from '../../../constants/Colors'; 
+
+import ButtonAdd from '@/app/components/ButtonAdd';
 
 interface Client {
   id: string;
@@ -41,7 +42,7 @@ export default function ClientDetailScreen() {
   if (!client) {
     return (
       <ThemedView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color="#ff0000" />
+        <ActivityIndicator size="large" color={colors.tint} />
       </ThemedView>
     );
   }
@@ -49,10 +50,11 @@ export default function ClientDetailScreen() {
   return (
     <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[styles.title, { color: colors.text }]}>{client.nome}</Text>
-      <ThemedText style={{ color: colors.text }}>Email: {client.email ?? "Não informado"}</ThemedText>
-      <ThemedText style={{ color: colors.text }}>Telefone: {client.telefone}</ThemedText>
-      <ThemedText style={{ color: colors.text }}>Endereço: {client.endereco ?? "Não informado"}</ThemedText>
-      <ThemedText style={{ color: colors.text }}>Referência: {client.referencia ?? "Não informado"}</ThemedText>
+      <ButtonAdd onPress={() => {}} label={`Adicionar Compra - ID: ${client.id}`} />
+      <ButtonAdd onPress={() => {}} label="Ver Compras" />
+      <ButtonAdd onPress={() => {}} label="Adicionar Pagamento" />
+      <ButtonAdd onPress={() => {}} label="Adicionar Compra" />
+
     </ThemedView>
   );
 }
@@ -66,6 +68,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 8,
+    marginLeft: 10,
   },
   loadingContainer: {
     flex: 1,

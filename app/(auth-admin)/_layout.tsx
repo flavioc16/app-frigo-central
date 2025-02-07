@@ -60,7 +60,7 @@ export default function RootLayout() {
           name="client/[id]"
           options={{
             headerShown: true,
-            title: 'Detalhes do Cliente',
+            title: 'Funçoes do Cliente',
           }}
         />
         <Stack.Screen
@@ -68,7 +68,8 @@ export default function RootLayout() {
           options={{
             headerShown: true,
             title: 'Cadastrar Cliente',
-            presentation: 'modal', 
+            presentation: 'modal',
+             
           }}
         />
       </Stack>

@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import ThemedClientItem from '@/components/ThemedClientItem';
+import ThemedClientItem from '@/app/(auth-admin)/client/components/ThemedClientItem';
 import { useTheme } from '../../../src/context/ThemeContext'; // Importando o contexto de tema
 import { Colors } from '../../../constants/Colors';  // Verifique se o caminho está correto
 

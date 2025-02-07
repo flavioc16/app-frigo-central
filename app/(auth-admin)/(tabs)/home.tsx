@@ -1,39 +1,65 @@
-import { StyleSheet, Text, Switch, View } from 'react-native';
-import { useTheme } from '../../../src/context/ThemeContext'; // Importando o contexto de tema
-import { Colors } from '../../../constants/Colors';  // Verifique se o caminho está correto
-import { ThemedButton } from '@/components/ui/ThemedButton';
-import { useContext } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
+import { LogOut, Settings, BellRing } from "lucide-react-native";
+import { useTheme } from '../../../src/context/ThemeContext'; 
+import { Colors } from '../../../constants/Colors';  
+import { useContext, useState } from 'react';
 import { AuthContext } from '../../../src/context/AuthContext';
+import ConfirmExitModal from '../../../app/components/ConfirmExitModal';
+import SettingsModal from '../../../app/(auth-admin)/home/components/ModalConfig'; // Importa o modal de configurações
 
-export default function ClientScreen() {
-  const { theme, toggleTheme } = useTheme(); // Obtém o tema e as cores
-  const colors = Colors[theme] || Colors.light; // Garantir que sempre haja um fallback
-    const { signOut } = useContext(AuthContext);
+export default function HomeScreen() {
+  const { theme, toggleTheme } = useTheme();
+  const colors = Colors[theme] || Colors.light;
+  const { signOut } = useContext(AuthContext);
+  const [exitModalVisible, setExitModalVisible] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  
+  const notificationCount = 5;
+
+  // Definindo a logo com base no tema
+  const logoSource = theme === 'dark'
+    ? require('../../../assets/images/LOGO-VERMELHO-E-BRANCA.png')  // Logo para o tema escuro
+    : require('../../../assets/images/LOGO-TODA-VERMELHA.png');  // Logo para o tema claro
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.titleContainer}>
-        <Text style={{ fontSize: 20, color: colors.text , fontWeight: 'bold'}}>
-          Inicio
-        </Text>
-      </View>
       <View style={styles.switchContainer}>
-        <Text style={{ color: colors.text }}>Mudar Tema</Text>
-        <Switch
-          value={theme === 'dark'}  // Determina o estado do switch com base no tema atual
-          onValueChange={toggleTheme}  // Alterna o tema ao mudar o estado do switch
-          trackColor={{ false: colors.switchTrackFalse, true: colors.switchTrackTrue }}
-          thumbColor={colors.switchThumb}
-        />
-        <ThemedButton
-          title="Sair"
-          onPress={signOut} // Função para realizar o logout
-          lightBackgroundColor="#b62828" // Vermelho no tema claro
-          darkBackgroundColor="#b62828" // Vermelho no tema escuro
-          lightTextColor="#FFFFFF" // Branco no tema claro
-          darkTextColor="#E0F2F1" // Branco-esverdeado no tema escuro
-        />
+        <View style={styles.leftItems}>
+          {/* Exibe a logo de acordo com o tema */}
+          <Image source={logoSource} style={styles.logo} />
+        </View>
+
+        <View style={styles.rightIcons}>
+          <TouchableOpacity onPress={() => console.log('Abrir Configurações')}>
+            <BellRing size={28} color={colors.icon} />
+            {/* Contador sobre o ícone */}
+            {notificationCount > 0 && (
+              <View style={styles.notificationBadge}>
+                <Text style={styles.badgeText}>{notificationCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          
+          <TouchableOpacity onPress={() => setSettingsVisible(true)}>
+            <Settings size={28} color={colors.icon} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setExitModalVisible(true)}>
+            <LogOut size={28} color={colors.icon} />
+          </TouchableOpacity>
+          
+        </View>
       </View>
+
+      <ConfirmExitModal
+        visible={exitModalVisible}
+        onConfirm={signOut}
+        onCancel={() => setExitModalVisible(false)}
+      />
+
+      <SettingsModal 
+        visible={settingsVisible} 
+        onClose={() => setSettingsVisible(false)} 
+      />
     </View>
   );
 }
@@ -50,7 +76,38 @@ const styles = StyleSheet.create({
   switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 20,
+    justifyContent: 'space-between', // Distribui os itens entre esquerda e direita
+  },
+  leftItems: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12, // Espaçamento entre os itens da esquerda
+  },
+  rightIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16, // Espaçamento entre os ícones na direita
+    position: 'relative', // Necessário para o posicionamento absoluto do contador
+  },
+  logo: {
+    width: 160, // Ajuste o tamanho da logo conforme necessário
+    height: 130,  // Ajuste o tamanho da logo conforme necessário
+    resizeMode: 'contain', // Garante que a imagem mantenha suas proporções
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -6,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  badgeText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });
