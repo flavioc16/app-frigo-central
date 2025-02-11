@@ -2,17 +2,13 @@ import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
 import { LogOut, Settings, BellRing } from "lucide-react-native";
 import { useTheme } from '../../../src/context/ThemeContext'; 
 import { Colors } from '../../../constants/Colors';  
-import { useContext, useState } from 'react';
-import { AuthContext } from '../../../src/context/AuthContext';
 import ConfirmExitModal from '../../../app/components/ConfirmExitModal';
-import SettingsModal from '../../../app/(auth-admin)/home/components/ModalConfig'; // Importa o modal de configurações
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
   const { theme, toggleTheme } = useTheme();
   const colors = Colors[theme] || Colors.light;
-  const { signOut } = useContext(AuthContext);
-  const [exitModalVisible, setExitModalVisible] = useState(false);
-  const [settingsVisible, setSettingsVisible] = useState(false);
+  const router = useRouter();
   
   const notificationCount = 5;
 
@@ -25,14 +21,12 @@ export default function HomeScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.switchContainer}>
         <View style={styles.leftItems}>
-          {/* Exibe a logo de acordo com o tema */}
           <Image source={logoSource} style={styles.logo} />
         </View>
-
         <View style={styles.rightIcons}>
-          <TouchableOpacity onPress={() => console.log('Abrir Configurações')}>
+          <TouchableOpacity onPress={() => console.log('Notificação')}>
             <BellRing size={28} color={colors.icon} />
-            {/* Contador sobre o ícone */}
+
             {notificationCount > 0 && (
               <View style={styles.notificationBadge}>
                 <Text style={styles.badgeText}>{notificationCount}</Text>
@@ -40,26 +34,16 @@ export default function HomeScreen() {
             )}
           </TouchableOpacity>
           
-          <TouchableOpacity onPress={() => setSettingsVisible(true)}>
+          <TouchableOpacity onPress={() => router.push(`/(auth-admin)/home/ModalConfig`)}>
             <Settings size={28} color={colors.icon} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setExitModalVisible(true)}>
-            <LogOut size={28} color={colors.icon} />
-          </TouchableOpacity>
+    
           
         </View>
       </View>
 
-      <ConfirmExitModal
-        visible={exitModalVisible}
-        onConfirm={signOut}
-        onCancel={() => setExitModalVisible(false)}
-      />
 
-      <SettingsModal 
-        visible={settingsVisible} 
-        onClose={() => setSettingsVisible(false)} 
-      />
+      
     </View>
   );
 }

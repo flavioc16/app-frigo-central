@@ -23,7 +23,7 @@ import { Colors } from '@/constants/Colors';
 export default function LoginScreen() {
   const router = useRouter();
   const { signIn, loadingAuth } = useContext(AuthContext);
-  const { theme } = useTheme();  // Acessando o tema do contexto
+  const { theme } = useTheme(); 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);

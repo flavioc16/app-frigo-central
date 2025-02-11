@@ -1,14 +1,14 @@
 import { useEffect, useState, useMemo } from 'react';
-import { FlatList, View, ActivityIndicator, Text, StyleSheet, Pressable, TouchableOpacity } from 'react-native';
-import { Tag, MapPin, EllipsisVertical, ChevronRight } from "lucide-react-native";
+import { FlatList, View, ActivityIndicator, Text, StyleSheet, Pressable, TouchableOpacity, Modal } from 'react-native';
+import { Tag, MapPin, ChevronRight, X } from "lucide-react-native";
 import { api } from '../../../../src/services/api';
-import { ThemedView } from '../../../../components/ThemedView';
 import { ThemedText } from '../../../../components/ThemedText'; 
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../../../src/context/ThemeContext';
 import { Colors } from '../../../../constants/Colors';
 import ButtonAdd from '@/app/components/ButtonAdd';
 import SearchInput from '@/app/components/SearchInput';
+import CreateClientModal from './CreateClientModal';
 
 export interface Client {
   id: string;
@@ -24,11 +24,13 @@ export default function ThemedClientItem() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-
   const router = useRouter();
-
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
+  
+
+  //modal
+  const [modalVisible, setModalVisible] = useState(false); // Estado do modal
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -43,7 +45,7 @@ export default function ThemedClientItem() {
     };
 
     fetchClients();
-  }, []);
+  }, [clients]);
 
   const filteredClients = useMemo(() => {
     if (search.trim() === '') {
@@ -79,8 +81,8 @@ export default function ThemedClientItem() {
       />
 
       <ButtonAdd 
-        onPress={() => router.push(`/(auth-admin)/client/modal`)}
-        label="Adicionar Cliente"
+        onPress={() => setModalVisible(true)}
+        label="Cadastrar Cliente"
       />
 
       {filteredClients.length === 0 && search.length > 0 ? (
@@ -123,7 +125,7 @@ export default function ThemedClientItem() {
         />
       )}
 
-     
+      <CreateClientModal visible={modalVisible} onClose={() => setModalVisible(false)} />
 
     </View>
   );
@@ -175,6 +177,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    fontStyle: 'italic'
   },
   chevronIcon: {
     marginLeft: 10,
@@ -210,5 +213,10 @@ const styles = StyleSheet.create({
     top: 10,
     right: 10,
     padding: 10,
+  },
+  fullscreenModal: {
+    flex: 1,
+    paddingTop: 20, // Ajuste para evitar sobreposição com a barra de status
+    alignItems: 'center',
   },
 });

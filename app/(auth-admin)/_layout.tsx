@@ -72,6 +72,14 @@ export default function RootLayout() {
              
           }}
         />
+        <Stack.Screen
+          name="home/ModalConfig"
+          options={{
+            headerShown: true,
+            title: 'Configurações',
+            presentation: 'modal',
+          }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
