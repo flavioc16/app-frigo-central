@@ -19,6 +19,8 @@ import { TouchableWithoutFeedbackWrapper } from '@/src/components/TouchableWitho
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../src/context/ThemeContext';  // Importa o contexto de tema
 import { Colors } from '@/constants/Colors';
+import InputForm from '@/app/components/InputForm';
+
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -121,7 +123,7 @@ export default function LoginScreen() {
                 />
                 <TextInput
                   ref={usernameRef}
-                  style={[styles.input, { borderColor: border, color: text }]}
+                  style={[styles.input, {  backgroundColor: colors.cardBackground, borderColor: border, color: text }]}
                   autoCapitalize="none"
                   placeholder="Usuário"
                   value={username}
@@ -133,7 +135,7 @@ export default function LoginScreen() {
               <View style={styles.passwordContainer}>
                 <TextInput
                   ref={passwordRef}
-                  style={[styles.input, styles.passwordInput, { borderColor: border, color: text }]}
+                  style={[styles.input, styles.passwordInput, {  backgroundColor: colors.cardBackground, borderColor: border, color: text }]}
                   placeholder="Senha"
                   secureTextEntry={!isPasswordVisible}
                   value={password}
@@ -234,7 +236,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     top: '50%',
-    transform: [{ translateY: -20 }],
+    transform: [{ translateY: -18 }],
+    zIndex: 1,
   },
   errorText: {
     marginTop: 8,

@@ -66,6 +66,18 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose 
       .join(" ");
   };
   
+  const maskPhone = (value: string): string => {
+    value = value.replace(/\D/g, '');
+    if (value.length > 11) value = value.slice(0, 11);
+  
+    if (value.length === 0) return '';
+    if (value.length <= 2) return `(${value}`;
+    if (value.length <= 3) return `(${value.slice(0, 2)}) ${value.slice(2)}`;
+    if (value.length <= 6) return `(${value.slice(0, 2)}) ${value.slice(2, 3)}-${value.slice(3)}`;
+    if (value.length <= 7) return `(${value.slice(0, 2)}) ${value.slice(2, 3)}-${value.slice(3, 7)}`;
+    if (value.length <= 9) return `(${value.slice(0, 2)}) ${value.slice(2, 3)}-${value.slice(3, 7)}-${value.slice(7)}`;
+    return `(${value.slice(0, 2)}) ${value.slice(2, 3)}-${value.slice(3, 7)}-${value.slice(7, 11)}`;
+  };
 
   const handleAddClient = async () => {
     setSubmitted(true); 
@@ -196,8 +208,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose 
             value={phone}
             onChangeText={setPhone}
             placeholder="Telefone do cliente"
-            error={submitted && !phone.trim() ? 'O telefone do cliente é obrigatório' : ''}
-            ref={phoneRef}
+            maskFunction={maskPhone}
           />
           <InputForm
             label="E-mail"

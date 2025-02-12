@@ -1,5 +1,6 @@
-import React, { forwardRef } from "react";
-import { View, TextInput, Text, StyleSheet } from "react-native";
+import React, { forwardRef, useState } from "react";
+import { View, TextInput, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Eye, EyeOff } from "lucide-react-native"; // Importando ícones
 import { Colors } from "../../constants/Colors";
 import { useTheme } from "../../src/context/ThemeContext";
 
@@ -12,32 +13,42 @@ interface InputFormProps {
   secureTextEntry?: boolean;
   autoFocus?: boolean;
   required?: boolean;
+  maskFunction?: (text: string) => string;
 }
 
 const InputForm = forwardRef<TextInput, InputFormProps>(
-  ({ label, value, onChangeText, placeholder = "Digite...", error, secureTextEntry = false, autoFocus = false, required = false }, ref) => {
+  ({ label, value, onChangeText, placeholder = "Digite...", error, secureTextEntry = false, autoFocus = false, required = false, maskFunction }, ref) => {
     const { theme } = useTheme();
     const colors = Colors[theme] || Colors.light;
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
     return (
       <View style={styles.container}>
-        <Text style={[styles.label, { color: colors.text }]}>{label}</Text>
+        {label && <Text style={[styles.label, { color: colors.text }]}>{label}</Text>}
         <View style={[styles.inputContainer, { backgroundColor: colors.inputBackground }]}>
           <TextInput
-            ref={ref} // Passando ref para o TextInput
+            ref={ref}
             style={[styles.input, { color: colors.text }]}
             placeholder={placeholder}
             placeholderTextColor={colors.placeholder}
             value={value}
-            onChangeText={onChangeText}
-            secureTextEntry={secureTextEntry}
+            onChangeText={(text) => onChangeText(maskFunction ? maskFunction(text) : text)}
+            secureTextEntry={secureTextEntry && !isPasswordVisible} // Alternando visibilidade
             autoFocus={autoFocus}
           />
+          {/* Botão para alternar visibilidade da senha */}
+          {secureTextEntry && (
+            <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
+              {isPasswordVisible ? (
+                <Eye size={20} color={colors.icon} />
+              ) : (
+                <EyeOff size={20} color={colors.icon} />
+              )}
+            </TouchableOpacity>
+          )}
         </View>
         {(error || (required && !value)) && (
-          <Text style={[styles.errorText, { color: colors.error }]}>
-            {error || "Campo obrigatório"}
-          </Text>
+          <Text style={[styles.errorText, { color: colors.error }]}>{error || "Campo obrigatório"}</Text>
         )}
       </View>
     );
@@ -69,6 +80,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 12,
     marginTop: 3,
-    marginLeft : 5,
+    marginLeft: 5,
   },
 });
