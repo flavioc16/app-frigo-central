@@ -209,6 +209,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose 
             onChangeText={setPhone}
             placeholder="Telefone do cliente"
             maskFunction={maskPhone}
+           
           />
           <InputForm
             label="E-mail"

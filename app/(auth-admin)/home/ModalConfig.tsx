@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, Switch, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../src/context/ThemeContext'; 
 import { Colors } from '../../../constants/Colors'; 
-import ConfirmExitModal from '../../../app/components/ConfirmExitModal';
+import ConfirmModal from '../../components/ConfirmModal';
 import { useContext, useState, useCallback } from 'react';
 import { AuthContext } from '@/src/context/AuthContext';
 import { LogOut } from 'lucide-react-native';
@@ -42,10 +42,14 @@ export default function SettingsModal({ visible, onClose }: SettingsModalProps) 
         <LogOut size={28} color={colors.icon} />
       </TouchableOpacity>
         
-      <ConfirmExitModal
+      <ConfirmModal
         visible={exitModalVisible}
         onConfirm={handleSignOut}
         onCancel={() => setExitModalVisible(false)}
+        title="Sair"
+        message="Tem certeza que deseja sair?"
+        confirmText="Sair"
+        cancelText="Cancelar"
       />
     </View>
   );

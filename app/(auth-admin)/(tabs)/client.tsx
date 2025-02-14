@@ -2,8 +2,6 @@ import { StyleSheet, Text, View } from 'react-native';
 import ThemedClientItem from '@/app/(auth-admin)/client/components/ThemedClientItem';
 import { useTheme } from '../../../src/context/ThemeContext'; // Importando o contexto de tema
 import { Colors } from '../../../constants/Colors';  // Verifique se o caminho está correto
-import { Search } from 'lucide-react-native';
-import SearchInput from '@/app/components/SearchInput';
 
 export default function ClientScreen() {
   const { theme } = useTheme(); // Obtém o tema do contexto

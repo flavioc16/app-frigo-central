@@ -60,7 +60,7 @@ export default function RootLayout() {
           name="client/[id]"
           options={{
             headerShown: true,
-            title: 'Funçoes do Cliente',
+            title: '',
           }}
         />
         <Stack.Screen

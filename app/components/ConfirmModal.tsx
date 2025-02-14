@@ -3,36 +3,47 @@ import { Colors } from '@/constants/Colors';
 import { useTheme } from '../../src/context/ThemeContext';
 import { BlurView } from 'expo-blur'; // Importando BlurView do Expo
 
-interface ConfirmExitModalProps {
+interface ConfirmModalProps {
   visible: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  title: string; // Título do modal
+  message: string; // Mensagem do modal
+  confirmText?: string; // Texto do botão de confirmação (opcional)
+  cancelText?: string; // Texto do botão de cancelamento (opcional)
 }
 
-export default function ConfirmExitModal({ visible, onConfirm, onCancel }: ConfirmExitModalProps) {
+export default function ConfirmModal({
+  visible,
+  onConfirm,
+  onCancel,
+  title,
+  message,
+  confirmText = 'Sim', // Valor padrão para o botão de confirmação
+  cancelText = 'Cancelar', // Valor padrão para o botão de cancelamento
+}: ConfirmModalProps) {
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
 
   return (
     <Modal visible={visible} animationType="none" transparent>
       <View style={styles.modalContainer}>
-        {/* Adicionando BlurView para efeito de desfoque */}
         <BlurView 
           style={styles.blurView} 
-          intensity={30} // Intensidade do blur (de 0 a 100)
+          intensity={30} 
           tint={theme === 'dark' ? 'light' : 'dark'}
         >
           <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Sair</Text>
-            <Text style={[styles.modalText, { color: colors.text }]}>Tem certeza que deseja sair?</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
+            <Text style={[styles.modalText, { color: colors.text }]}>{message}</Text>
 
             <View style={styles.buttonContainer}>
               <TouchableOpacity onPress={onCancel} style={styles.cancelButton}>
-                <Text style={[styles.modalButton, { color: colors.text }]}>Cancelar</Text>
+                <Text style={[styles.modalButton, { color: colors.text }]}>{cancelText}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity onPress={onConfirm} style={styles.confirmButton}>
-                <Text style={[styles.modalButton, { color: colors.tint }]}>Sim</Text>
+                <Text style={[styles.modalButton, { color: colors.tint }]}>{confirmText}</Text>
               </TouchableOpacity>
             </View>
           </View>

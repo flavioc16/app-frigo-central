@@ -14,6 +14,7 @@ interface InputFormProps {
   autoFocus?: boolean;
   required?: boolean;
   maskFunction?: (text: string) => string;
+  
 }
 
 const InputForm = forwardRef<TextInput, InputFormProps>(
@@ -33,10 +34,10 @@ const InputForm = forwardRef<TextInput, InputFormProps>(
             placeholderTextColor={colors.placeholder}
             value={value}
             onChangeText={(text) => onChangeText(maskFunction ? maskFunction(text) : text)}
-            secureTextEntry={secureTextEntry && !isPasswordVisible} // Alternando visibilidade
+            secureTextEntry={secureTextEntry && !isPasswordVisible} 
             autoFocus={autoFocus}
+            autoCapitalize="none"
           />
-          {/* Botão para alternar visibilidade da senha */}
           {secureTextEntry && (
             <TouchableOpacity onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
               {isPasswordVisible ? (

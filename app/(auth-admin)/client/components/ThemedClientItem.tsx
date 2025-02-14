@@ -1,14 +1,18 @@
-import { useEffect, useState, useMemo } from 'react';
-import { FlatList, View, ActivityIndicator, Text, StyleSheet, Pressable, TouchableOpacity, Modal } from 'react-native';
-import { Tag, MapPin, ChevronRight, X } from "lucide-react-native";
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
+import { FlatList, View, ActivityIndicator, Text, StyleSheet, Pressable, TouchableOpacity, Alert } from 'react-native';
+import { Tag, MapPin, Plus, EllipsisVertical, } from "lucide-react-native";
 import { api } from '../../../../src/services/api';
 import { ThemedText } from '../../../../components/ThemedText'; 
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../../../src/context/ThemeContext';
 import { Colors } from '../../../../constants/Colors';
+import { BottomSheetModal, BottomSheetBackdrop, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import ButtonAdd from '@/app/components/ButtonAdd';
 import SearchInput from '@/app/components/SearchInput';
 import CreateClientModal from './CreateClientModal';
+import ClientBottomSheet from './ClientBottomSheet';
+import ConfirmModal from '@/app/components/ConfirmModal';
+
 
 export interface Client {
   id: string;
@@ -27,10 +31,80 @@ export default function ThemedClientItem() {
   const router = useRouter();
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
-  
 
-  //modal
-  const [modalVisible, setModalVisible] = useState(false); // Estado do modal
+  const [modalVisible, setModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<string | null>(null);
+
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => ['40%','65%','90%'], []);
+  const [currentSnapPoint, setCurrentSnapPoint] = useState<string>('25%');
+  const [overlayVisible, setOverlayVisible] = useState(false); 
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [selectedClientName, setSelectedClientName] = useState<string | null>(null);
+
+  const handleOpenBottomSheet = useCallback((id: string, name: string) => {
+    setSelectedClientId(id);
+    setSelectedClientName(name);
+    bottomSheetRef.current?.present();
+  }, []);
+
+  const handleBottomSheetChange = useCallback((index: number) => {
+    setOverlayVisible(index !== -1);
+    setCurrentSnapPoint(snapPoints[index]);
+  }, [snapPoints]);
+
+  const handleAddPurchase = (id: string) => {
+    Alert.alert('Adicionar Compra', `ID do cliente: ${id}`);
+  };
+  
+  const handleViewPurchases = (id: string) => {
+    Alert.alert('Ver Compras', `ID do cliente: ${id}`);
+  };
+  
+  const handleEditClient = (id: string) => {
+    Alert.alert('Editar Cliente', `ID do cliente: ${id}`);
+  };
+  
+  const handleDeleteClient = (id: string) => {
+    setClientToDelete(id); // Armazena o ID do cliente a ser excluído
+    setDeleteModalVisible(true); // Abre o modal de confirmação
+  };
+
+  const handleConfirmDelete = async () => {
+    if (clientToDelete) {
+      try {
+        await api.delete(`/clients`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          data: {
+            id: clientToDelete,
+          },
+        });
+        Alert.alert('Sucesso', 'Cliente excluído com sucesso!');
+        bottomSheetRef.current?.close();
+      } catch (err) {
+        Alert.alert('Erro', 'Não foi possível excluir o cliente.');
+      } finally {
+        setDeleteModalVisible(false);
+        setClientToDelete(null);
+      }
+    }
+  };
+  
+  const handleCancelDelete = () => {
+    setDeleteModalVisible(false); 
+    setClientToDelete(null); // 
+  };
+
+  const renderBackdrop: React.FC<BottomSheetBackdropProps> = (props) => (
+    <BottomSheetBackdrop
+      {...props}
+      disappearsOnIndex={-1}
+      appearsOnIndex={0}
+    />
+  );
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -59,7 +133,6 @@ export default function ThemedClientItem() {
     );
   }, [search, clients]);
 
-
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -72,42 +145,45 @@ export default function ThemedClientItem() {
     return <Text style={[styles.error, { color: colors.error }]}>{error}</Text>;
   }
 
+  
   return (
-    <View style={[styles.themedContainer]}> 
+    <View style={[styles.themedContainer]}>
       <SearchInput
         value={search}
         onChangeText={setSearch}
         placeholder="Buscar por nome, referência ou endereço"
       />
 
-      <ButtonAdd 
+      <ButtonAdd
         onPress={() => setModalVisible(true)}
+        iconRight={<Plus size={24} color={colors.success} />} 
         label="Cadastrar Cliente"
       />
-
+     
       {filteredClients.length === 0 && search.length > 0 ? (
         <ThemedText style={[styles.noResults, { color: colors.text }]}>Nenhum cliente encontrado.</ThemedText>
       ) : (
         <FlatList
           showsVerticalScrollIndicator={false}
+          
           data={filteredClients}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <Pressable 
-              onPress={() => router.push(`/(auth-admin)/client/${item.id}`)} 
-              style={[styles.clientContainer, { backgroundColor: colors.cardBackground }]} 
-              android_ripple={{ color: 'transparent' }} 
+            <Pressable
+              onPress={() => router.push(`/(auth-admin)/client/${item.id}`)}
+              style={[styles.clientContainer, { backgroundColor: colors.cardBackground }]}
+              android_ripple={{ color: 'transparent' }}
             >
               <View style={styles.clientInfo}>
                 <Text style={[styles.name, { color: colors.text }]}>{item.nome}</Text>
-                
+
                 {item.referencia && (
                   <View style={styles.infoRow}>
                     <Tag size={16} color={colors.icon} />
                     <Text style={[styles.info, { color: colors.text }]}>{item.referencia}</Text>
                   </View>
                 )}
-                
+
                 {item.endereco && (
                   <View style={styles.infoRow}>
                     <MapPin size={16} color={colors.icon} />
@@ -115,9 +191,9 @@ export default function ThemedClientItem() {
                   </View>
                 )}
               </View>
-              
-              <TouchableOpacity onPress={() => router.push(`/(auth-admin)/client/${item.id}`)} >
-                <ChevronRight size={25} color={colors.icon} style={styles.chevronIcon} />
+
+              <TouchableOpacity onPress={() => handleOpenBottomSheet(item.id, item.nome)}>
+                <EllipsisVertical size={25} color={colors.icon} style={styles.chevronIcon} />
               </TouchableOpacity>
             </Pressable>
           )}
@@ -125,8 +201,30 @@ export default function ThemedClientItem() {
         />
       )}
 
-      <CreateClientModal visible={modalVisible} onClose={() => setModalVisible(false)} />
+      <ConfirmModal
+        visible={deleteModalVisible}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+        title="Excluir Cliente"
+        message="Tem certeza que deseja excluir este cliente?"
+        confirmText= "Excluir"
+        cancelText="Cancelar"
+      />
 
+      <ClientBottomSheet
+        selectedClientId={selectedClientId} 
+        selectedClientName={selectedClientName}
+        colors={colors}
+        onAddPurchase={handleAddPurchase}
+        onViewPurchases={handleViewPurchases}
+        onEditClient={handleEditClient}
+        onDeleteClient={handleDeleteClient}
+        bottomSheetRef={bottomSheetRef}
+        snapPoints={snapPoints}
+        onChange={handleBottomSheetChange}
+      />
+  
+      <CreateClientModal visible={modalVisible} onClose={() => setModalVisible(false)} />
     </View>
   );
 }
@@ -145,7 +243,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    
   },
   clientInfo: {
     flex: 1,
@@ -182,41 +279,13 @@ const styles = StyleSheet.create({
   chevronIcon: {
     marginLeft: 10,
   },
-  
-  modalContainer: {
+  overlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-
-  },
-  modalContent: {
-    padding: 20,
-    borderRadius: 10,
-    width: '90%',
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  modalText: {
-    fontSize: 16,
-    marginVertical: 5,
-  },
-  modalButton: {
-    marginTop: 10,
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  closeButton: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    padding: 10,
-  },
-  fullscreenModal: {
-    flex: 1,
-    paddingTop: 20, // Ajuste para evitar sobreposição com a barra de status
-    alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.01)', // Cor de fundo semitransparente
+    zIndex: 1,
   },
 });

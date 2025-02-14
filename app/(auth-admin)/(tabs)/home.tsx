@@ -1,8 +1,8 @@
 import { StyleSheet, Text, View, TouchableOpacity, Image } from 'react-native';
-import { LogOut, Settings, BellRing } from "lucide-react-native";
+import { Settings, BellRing } from "lucide-react-native";
 import { useTheme } from '../../../src/context/ThemeContext'; 
 import { Colors } from '../../../constants/Colors';  
-import ConfirmExitModal from '../../../app/components/ConfirmExitModal';
+
 import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
