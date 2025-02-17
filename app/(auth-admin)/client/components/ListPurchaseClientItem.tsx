@@ -4,7 +4,6 @@ import { FlatList,
   ActivityIndicator, 
   Text, 
   StyleSheet, 
-  Pressable, 
   TouchableOpacity, 
   Alert, 
   KeyboardAvoidingView,
@@ -37,7 +36,7 @@ export interface Client {
   referencia?: string;
 }
 
-export default function ListClientItem() {
+export default function ListPurchaseClientItem() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -191,7 +190,7 @@ export default function ListClientItem() {
               setModalVisible(true);
             }}
             iconRight={<Plus size={24} color={colors.success} />} 
-            label="Cadastrar Cliente"
+            label="Cadastrar Compra"
           />
   
           {filteredClients.length === 0 && search.length > 0 ? (

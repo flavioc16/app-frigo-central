@@ -8,6 +8,8 @@ import { useTheme } from '../../src/context/ThemeContext'; // Importando o conte
 import 'react-native-reanimated';
 import { DarkTheme, DefaultTheme } from '@react-navigation/native';
 
+import BackButton from '../components/BackButton';
+
 
 SplashScreen.preventAutoHideAsync();
 
@@ -46,9 +48,11 @@ export default function RootLayout() {
         <Stack.Screen 
           name="(tabs)" 
           options={{
-            title: 'Clientes', 
+            title: '', 
+            headerBackTitle: '',
             headerShown: false 
-          }} />
+          }} 
+        />
         <Stack.Screen
             name="purchases"
             options={{
@@ -56,12 +60,12 @@ export default function RootLayout() {
               headerShown: true, 
             }}
         />
-    
         <Stack.Screen
-          name="client/[listPurchasesClientId]"
-          options={{
-            headerShown: true,
-            title: '', 
+            name="client/[listPurchasesClientId]"
+            options={{
+              headerShown: true,
+              title: '',
+              headerLeft: () => <BackButton />,
           }}
         />
         <Stack.Screen
@@ -70,9 +74,9 @@ export default function RootLayout() {
             headerShown: true,
             title: 'Cadastrar Cliente',
             presentation: 'modal',
-             
+              
           }}
-        />
+          />
         <Stack.Screen
           name="home/ModalConfig"
           options={{

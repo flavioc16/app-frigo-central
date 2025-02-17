@@ -6,6 +6,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '../../../src/context/ThemeContext'; 
 import { Colors } from '../../../constants/Colors'; 
 import ThemedPurchaseItem from '@/components/ThemedPurchaseItem';
+import ListPurchaseClientItem from './components/ListPurchaseClientItem';
 import { useNavigation } from '@react-navigation/native';
 
 interface Compra {
@@ -67,15 +68,8 @@ export default function listPurchasesClientId() {
   }
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
-      <FlatList
-        data={compras.compras}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ThemedPurchaseItem {...item} />}
-        ListEmptyComponent={<Text style={styles.noDataText}>Nenhuma compra encontrada.</Text>}
-        contentContainerStyle={compras.compras.length === 0 ? styles.emptyContent : styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ListPurchaseClientItem  />
       {compras.somaTotalCompras > 0 && (
         <View style={styles.footer}>
           <Text style={styles.footerText}>
@@ -83,7 +77,7 @@ export default function listPurchasesClientId() {
           </Text>
         </View>
       )}
-    </ThemedView>
+    </View>
   );
 }
 
