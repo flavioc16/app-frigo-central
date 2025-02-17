@@ -25,10 +25,10 @@ export const Colors = {
     error: '#f44336', 
     warning: '#ff9800',
     
-    // Adicionando as novas cores para o Switch
-    switchTrackFalse: '#ccc',  // Cor para o estado "off"
-    switchTrackTrue: '#4cd137', // Cor para o estado "on"
-    switchThumb: '#fff',        // Cor da bolinha
+
+    switchTrackFalse: '#ccc',
+    switchTrackTrue: '#4cd137', 
+    switchThumb: '#fff',        
   },
   dark: {
     text: '#ECEDEE',
@@ -51,8 +51,6 @@ export const Colors = {
     success: '#4caf50',
     error: '#f44336',
     warning: '#ff9800',
-    
-    // Adicionando as novas cores para o Switch
     switchTrackFalse: '#555',  // Cor para o estado "off"
     switchTrackTrue: '#4cd137', // Cor para o estado "on"
     switchThumb: '#fff',        // Cor da bolinha

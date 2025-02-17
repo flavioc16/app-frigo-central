@@ -10,9 +10,7 @@ export default function ClientScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.titleContainer}>
-        <Text style={{ fontSize: 20, color: colors.text , fontWeight: 'bold', marginBottom: 10}}>
-          Clientes
-        </Text>
+       
       </View>
       <ThemedClientItem />
     </View>
@@ -26,7 +24,7 @@ const styles = StyleSheet.create({
   },
   titleContainer: {
     alignItems: 'center',
-    marginTop: '10%',
+    marginTop: '8%',
     borderBottomEndRadius: 10,
   },
 });

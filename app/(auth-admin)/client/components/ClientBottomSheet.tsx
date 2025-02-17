@@ -5,7 +5,7 @@ import { Colors } from '../../../../constants/Colors';
 import { Plus, ShoppingCart, UserRoundPen, Trash2 } from "lucide-react-native";
 
 interface ClientBottomSheetProps {
-    selectedClientId: string | null;
+    selectedClientId: string | undefined;
     selectedClientName: string | null;
     colors: typeof Colors.light | typeof Colors.dark;
     onAddPurchase: (id: string) => void;
@@ -16,19 +16,6 @@ interface ClientBottomSheetProps {
     snapPoints: (string | number)[];
     onChange: (index: number) => void;
 }
-
-interface ClientBottomSheetProps {
-    selectedClientId: string | null;
-    selectedClientName: string | null;
-    colors: typeof Colors.light | typeof Colors.dark;
-    onAddPurchase: (id: string) => void;
-    onViewPurchases: (id: string) => void;
-    onEditClient: (id: string) => void;
-    onDeleteClient: (id: string) => void; // Função para abrir o modal de confirmação
-    bottomSheetRef: React.RefObject<BottomSheetModal>;
-    snapPoints: (string | number)[];
-    onChange: (index: number) => void;
-  }
   
   const ClientBottomSheet: React.FC<ClientBottomSheetProps> = ({
     selectedClientId,
@@ -48,6 +35,8 @@ interface ClientBottomSheetProps {
           {...props}
           disappearsOnIndex={-1}
           appearsOnIndex={0}
+          opacity={0.5}
+          
         />
       ),
       []
@@ -59,13 +48,17 @@ interface ClientBottomSheetProps {
         snapPoints={snapPoints}
         enableDynamicSizing={false}
         backdropComponent={renderBackdrop}
+        animationConfigs={{
+          duration: 300, 
+        }}
+        animateOnMount={true} 
         backgroundStyle={{ 
-          backgroundColor: colors.bottomSheetBackground,
+          backgroundColor: colors.background,
           borderRadius: 20,
         }}
         handleIndicatorStyle={{ 
           backgroundColor: colors.icon,
-          width: 35,
+          width: 40,
         }}
         onChange={onChange}
       >
@@ -126,9 +119,10 @@ interface ClientBottomSheetProps {
                 flexDirection: 'row',
                 alignItems: 'center',
                 marginBottom: 10,
+                marginTop: 15,
                 paddingVertical: 12,
                 paddingHorizontal: 15,
-                backgroundColor: colors.cardBackground,
+                backgroundColor: colors.inputBackground,
                 borderRadius: 5,
                 justifyContent: 'space-between',
               }}

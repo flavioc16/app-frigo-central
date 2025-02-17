@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useRef, useContext, useEffect } from 'react';
 import { 
   Modal, 
   View, 
@@ -6,8 +6,8 @@ import {
   TouchableOpacity, 
   StyleSheet, 
   ActivityIndicator, 
-  TextInput, 
-  Alert 
+  Alert, 
+  TextInput
 } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useTheme } from '../../../../src/context/ThemeContext';
@@ -19,23 +19,37 @@ import { api } from '@/src/services/api';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import axios from 'axios';
 
+export interface User {
+    id: string;
+    name: string;
+    username: string;
+    password: string;
+    role: string;
+    created_at: string;
+    updated_at: string;
+}
+  
 export interface Client {
+  id: string;
   nome: string;
   email?: string;
   telefone: string;
   endereco?: string;
   referencia?: string;
   username: string;
-  password: string;
+  password?: string;
+  user?: User;
 }
 
-interface CreateClientModalProps {
+
+interface EditClientModalProps {
   visible: boolean;
   onClose: () => void;
   updateClients: () => void;
+  clientId?: string;  // Recebe a ID do cliente a ser editado
 }
 
-const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,  updateClients }) => {
+const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, updateClients, clientId }) => {
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
   const { user } = useContext(AuthContext); 
@@ -59,14 +73,6 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
   const usernameRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
 
-  const capitalizeFirstLetter = (text: string) => {
-    return text
-      .toLowerCase()
-      .split(" ")
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-  };
-  
   const maskPhone = (value: string): string => {
     value = value.replace(/\D/g, '');
     if (value.length > 11) value = value.slice(0, 11);
@@ -80,9 +86,50 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
     return `(${value.slice(0, 2)}) ${value.slice(2, 3)}-${value.slice(3, 7)}-${value.slice(7, 11)}`;
   };
 
-  const handleAddClient = async () => {
-    setSubmitted(true); 
+  const capitalizeFirstLetter = (text: string) => {
+    return text
+      .toLowerCase()
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
 
+ 
+  useEffect(() => {
+    if (clientId) {
+      fetchClientData();
+    }
+  }, [clientId]);
+
+  const fetchClientData = async () => {
+    try {
+      const response = await api.get(`/clients/${clientId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      const clientData = response.data;
+      
+
+      setName(clientData?.nome || '');
+      setReference(clientData?.referencia);
+      setAddress(clientData?.endereco);
+      setPhone(clientData?.telefone);
+      setEmail(clientData?.email);
+      setUsername(clientData.user?.username);
+      setPassword(''); 
+
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível carregar os dados do cliente.', [
+        { text: 'OK' }
+      ]);
+    }
+  };
+  const handleEditClient = async () => {
+    setSubmitted(true);
+  
+    // Validações dos campos
     if (!name.trim()) {
       nameRef.current?.focus();
       return;
@@ -103,60 +150,64 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
       usernameRef.current?.focus();
       return;
     }
-    if (!password.trim()) {
-      passwordRef.current?.focus();
-      return;
-    }
-
+  
     if (!token) {
       console.error('Usuário não autenticado. Token não encontrado.');
       return;
     }
-
+  
     setLoading(true);
-    
+  
     try {
-      const clientData: Client = {
+      if (!clientId) {
+        throw new Error("ID do cliente não fornecido.");
+      }
+  
+      // Criação do objeto clientData
+      const clientData: any = {
+        id: clientId,
         nome: name,
         telefone: phone,
         endereco: address,
         referencia: reference,
         email: email,
         username: username,
-        password: password,
+        user:{
+          username,
+          password
+        },
       };
-
-      const response = await api.post("/clients", clientData, {
+  
+      // Adiciona a senha apenas se for fornecida
+      if (password.trim() !== '') {
+        clientData.password = password;
+      }
+  
+      // Debug: Verifique o payload antes de enviar
+      console.log('Payload enviado:', clientData);
+  
+      // Envia a requisição para editar o cliente
+      const response = await api.put(`/clients`, clientData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
+  
       setLoading(false);
       setSubmitted(false);
-      onClose();  
-      updateClients(); 
-
-      const newClientName = response.data.cliente?.nome || "Novo cliente";
-      Alert.alert('Sucesso!', `Cliente ${newClientName} cadastrado com sucesso.`, [
+      onClose();
+      updateClients();
+  
+      Alert.alert('Tudo certo!', `${response.data.nome} editado com sucesso.`, [
         { text: 'OK' }
       ]);
-
-      setName('');
-      setReference('');
-      setAddress('');
-      setPhone('');
-      setEmail('');
-      setUsername('');
-      setPassword('');
-
-
+  
     } catch (error) {
       setLoading(false);
       setSubmitted(false);
-    
+  
       if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.error;
+        const errorMessage = error.response?.data?.error || 'Erro ao editar cliente.';
         Alert.alert('Erro', errorMessage, [
           { text: 'OK' }
         ]);
@@ -167,10 +218,12 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
       }
     }
   };
+  
+  
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+      <View style={[styles.modalContainer, { backgroundColor: colors.background }]} >
         <KeyboardAwareScrollView 
           contentContainerStyle={styles.scrollContent} 
           keyboardShouldPersistTaps="always"
@@ -178,7 +231,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
           style={styles.modalContent}
         >
           <Text style={[styles.modalTitle, { color: colors.text }]}>
-            Cadastrar Cliente
+            Editar Cliente
           </Text>
           <InputForm
             label="Nome"
@@ -186,7 +239,6 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
             onChangeText={(text) => setName(capitalizeFirstLetter(text))}
             placeholder="Nome do cliente"
             error={submitted && !name.trim() ? 'O nome do cliente é obrigatório' : ''}
-            autoFocus
             ref={nameRef}
           />
           <InputForm
@@ -211,7 +263,6 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
             onChangeText={setPhone}
             placeholder="Telefone do cliente"
             maskFunction={maskPhone}
-           
           />
           <InputForm
             label="E-mail"
@@ -231,13 +282,12 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
             label="Senha"
             value={password}
             onChangeText={setPassword}
-            placeholder="Senha do cliente "
+            placeholder="Senha do cliente"
             secureTextEntry={true}
-            error={submitted && !password.trim() ? 'A senha do cliente é obrigatória' : ''}
             ref={passwordRef}
           />
           <TouchableOpacity 
-            onPress={handleAddClient} 
+            onPress={handleEditClient} 
             style={[styles.button, loading && styles.disabledButton]} 
             disabled={loading}
           >
@@ -245,7 +295,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-                Cadastrar
+                Atualizar
               </ThemedText>
             )}
           </TouchableOpacity>
@@ -303,4 +353,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CreateClientModal;
+export default EditClientModal;

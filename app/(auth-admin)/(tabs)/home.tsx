@@ -4,9 +4,10 @@ import { useTheme } from '../../../src/context/ThemeContext';
 import { Colors } from '../../../constants/Colors';  
 
 import { useRouter } from 'expo-router';
+import ThemedClientItem from '../client/components/ThemedClientItem';
 
 export default function HomeScreen() {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
   const router = useRouter();
   
@@ -14,8 +15,8 @@ export default function HomeScreen() {
 
   // Definindo a logo com base no tema
   const logoSource = theme === 'dark'
-    ? require('../../../assets/images/LOGO-VERMELHO-E-BRANCA.png')  // Logo para o tema escuro
-    : require('../../../assets/images/LOGO-TODA-VERMELHA.png');  // Logo para o tema claro
+    ? require('../../../assets/images/LOGO-VERMELHO-E-BRANCA.png')  
+    : require('../../../assets/images/LOGO-TODA-VERMELHA.png');
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -38,10 +39,10 @@ export default function HomeScreen() {
             <Settings size={28} color={colors.icon} />
           </TouchableOpacity>
     
-          
+           
         </View>
+        
       </View>
-
 
       
     </View>

@@ -6,12 +6,15 @@ import { ThemedText } from '../../../../components/ThemedText';
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../../../src/context/ThemeContext';
 import { Colors } from '../../../../constants/Colors';
-import { BottomSheetModal, BottomSheetBackdrop, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import ButtonAdd from '@/app/components/ButtonAdd';
 import SearchInput from '@/app/components/SearchInput';
 import CreateClientModal from './CreateClientModal';
+import EditClientModal from './EditClientModal';
 import ClientBottomSheet from './ClientBottomSheet';
 import ConfirmModal from '@/app/components/ConfirmModal';
+import { InteractionManager } from 'react-native';
+import { Platform } from 'react-native';
 
 
 export interface Client {
@@ -33,20 +36,32 @@ export default function ThemedClientItem() {
   const colors = Colors[theme] || Colors.light;
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => ['40%','65%','90%'], []);
+  const snapPoints = useMemo(() => {
+    if (Platform.OS === 'ios') {
+      return ['25.3%', '40%', '80%'];  // Snap points para iOS
+    } else if (Platform.OS === 'android') {
+      return ['30%', '60%', '85%'];  
+    } else {
+      return ['31%', '50%', '75%'];
+    }
+  }, []);
+
   const [currentSnapPoint, setCurrentSnapPoint] = useState<string>('25%');
   const [overlayVisible, setOverlayVisible] = useState(false); 
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined);
   const [selectedClientName, setSelectedClientName] = useState<string | null>(null);
 
   const handleOpenBottomSheet = useCallback((id: string, name: string) => {
-    setSelectedClientId(id);
-    setSelectedClientName(name);
-    bottomSheetRef.current?.present();
+    InteractionManager.runAfterInteractions(() => {
+      setSelectedClientId(id);
+      setSelectedClientName(name);
+      bottomSheetRef.current?.present();
+    });
   }, []);
 
   const handleBottomSheetChange = useCallback((index: number) => {
@@ -63,7 +78,9 @@ export default function ThemedClientItem() {
   };
   
   const handleEditClient = (id: string) => {
-    Alert.alert('Editar Cliente', `ID do cliente: ${id}`);
+    setEditModalVisible(true);
+    bottomSheetRef.current?.close();
+    
   };
   
   const handleDeleteClient = (id: string) => {
@@ -82,6 +99,7 @@ export default function ThemedClientItem() {
             id: clientToDelete,
           },
         });
+        updateClients();
         Alert.alert('Sucesso', 'Cliente excluído com sucesso!');
         bottomSheetRef.current?.close();
       } catch (err) {
@@ -98,28 +116,25 @@ export default function ThemedClientItem() {
     setClientToDelete(null); // 
   };
 
-  const renderBackdrop: React.FC<BottomSheetBackdropProps> = (props) => (
-    <BottomSheetBackdrop
-      {...props}
-      disappearsOnIndex={-1}
-      appearsOnIndex={0}
-    />
-  );
 
+  const fetchClients = async () => {
+    try {
+      const response = await api.get<Client[]>('/clients');
+      setClients(response.data);
+    } catch (err) {
+      setError('Erro ao buscar clientes.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    const fetchClients = async () => {
-      try {
-        const response = await api.get<Client[]>('/clients');
-        setClients(response.data);
-      } catch (err) {
-        setError('Erro ao buscar clientes.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchClients();
-  }, [clients]);
+  }, []);
+  
+  const updateClients = async () => {
+    await fetchClients();
+  };
 
   const filteredClients = useMemo(() => {
     if (search.trim() === '') {
@@ -169,10 +184,10 @@ export default function ThemedClientItem() {
           data={filteredClients}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <Pressable
-              onPress={() => router.push(`/(auth-admin)/client/${item.id}`)}
+            <TouchableOpacity
+              onPress={() => handleOpenBottomSheet(item.id, item.nome)}
               style={[styles.clientContainer, { backgroundColor: colors.cardBackground }]}
-              android_ripple={{ color: 'transparent' }}
+              activeOpacity={0.8}
             >
               <View style={styles.clientInfo}>
                 <Text style={[styles.name, { color: colors.text }]}>{item.nome}</Text>
@@ -195,7 +210,7 @@ export default function ThemedClientItem() {
               <TouchableOpacity onPress={() => handleOpenBottomSheet(item.id, item.nome)}>
                 <EllipsisVertical size={25} color={colors.icon} style={styles.chevronIcon} />
               </TouchableOpacity>
-            </Pressable>
+            </TouchableOpacity>
           )}
           ListFooterComponent={<View style={{ height: 75 }} />}
         />
@@ -209,6 +224,7 @@ export default function ThemedClientItem() {
         message="Tem certeza que deseja excluir este cliente?"
         confirmText= "Excluir"
         cancelText="Cancelar"
+    
       />
 
       <ClientBottomSheet
@@ -223,8 +239,16 @@ export default function ThemedClientItem() {
         snapPoints={snapPoints}
         onChange={handleBottomSheetChange}
       />
+
+      <EditClientModal 
+        visible={editModalVisible} 
+        onClose={() => setEditModalVisible(false) } 
+        updateClients={updateClients} 
+        clientId={selectedClientId} 
+      />
   
-      <CreateClientModal visible={modalVisible} onClose={() => setModalVisible(false)} />
+      <CreateClientModal visible={modalVisible} onClose={() => setModalVisible(false) } updateClients={updateClients} />
+
     </View>
   );
 }
