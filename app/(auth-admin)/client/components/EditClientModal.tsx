@@ -19,6 +19,8 @@ import { api } from '@/src/services/api';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import axios from 'axios';
 
+import { useNavigation } from '@react-navigation/native';
+
 export interface User {
     id: string;
     name: string;
@@ -55,6 +57,8 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
   const { user } = useContext(AuthContext); 
   const token = user?.token; 
 
+
+
   const [name, setName] = useState('');
   const [reference, setReference] = useState('');
   const [address, setAddress] = useState('');
@@ -65,7 +69,6 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // Refs para os inputs
   const nameRef = useRef<TextInput>(null);
   const referenceRef = useRef<TextInput>(null);
   const addressRef = useRef<TextInput>(null);
@@ -104,9 +107,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
   const fetchClientData = async () => {
     try {
       const response = await api.get(`/clients/${clientId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    
       });
   
       const clientData = response.data;
@@ -150,11 +151,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
       usernameRef.current?.focus();
       return;
     }
-  
-    if (!token) {
-      console.error('Usuário não autenticado. Token não encontrado.');
-      return;
-    }
+
   
     setLoading(true);
   
@@ -178,19 +175,12 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
         },
       };
   
-      // Adiciona a senha apenas se for fornecida
       if (password.trim() !== '') {
         clientData.password = password;
       }
-  
-      // Debug: Verifique o payload antes de enviar
-      console.log('Payload enviado:', clientData);
-  
-      // Envia a requisição para editar o cliente
+
       const response = await api.put(`/clients`, clientData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    
       });
   
       setLoading(false);

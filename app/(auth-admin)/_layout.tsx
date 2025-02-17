@@ -56,11 +56,12 @@ export default function RootLayout() {
               headerShown: true, 
             }}
         />
+    
         <Stack.Screen
-          name="client/[id]"
+          name="client/[listPurchasesClientId]"
           options={{
             headerShown: true,
-            title: '',
+            title: '', 
           }}
         />
         <Stack.Screen

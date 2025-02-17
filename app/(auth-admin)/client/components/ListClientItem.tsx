@@ -1,5 +1,18 @@
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import { FlatList, View, ActivityIndicator, Text, StyleSheet, Pressable, TouchableOpacity, Alert } from 'react-native';
+import { FlatList, 
+  View, 
+  ActivityIndicator, 
+  Text, 
+  StyleSheet, 
+  Pressable, 
+  TouchableOpacity, 
+  Alert, 
+  KeyboardAvoidingView,
+  Keyboard,
+  Platform,
+  TouchableWithoutFeedback,
+  InteractionManager 
+} from 'react-native';
 import { Tag, MapPin, Plus, EllipsisVertical, } from "lucide-react-native";
 import { api } from '../../../../src/services/api';
 import { ThemedText } from '../../../../components/ThemedText'; 
@@ -13,8 +26,6 @@ import CreateClientModal from './CreateClientModal';
 import EditClientModal from './EditClientModal';
 import ClientBottomSheet from './ClientBottomSheet';
 import ConfirmModal from '@/app/components/ConfirmModal';
-import { InteractionManager } from 'react-native';
-import { Platform } from 'react-native';
 
 
 export interface Client {
@@ -26,7 +37,7 @@ export interface Client {
   referencia?: string;
 }
 
-export default function ThemedClientItem() {
+export default function ListClientItem() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +54,7 @@ export default function ThemedClientItem() {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => {
     if (Platform.OS === 'ios') {
-      return ['25.3%', '40%', '80%'];  // Snap points para iOS
+      return ['25.3%', '40%', '80%'];
     } else if (Platform.OS === 'android') {
       return ['30%', '60%', '85%'];  
     } else {
@@ -74,13 +85,13 @@ export default function ThemedClientItem() {
   };
   
   const handleViewPurchases = (id: string) => {
-    Alert.alert('Ver Compras', `ID do cliente: ${id}`);
+    bottomSheetRef.current?.close();
+    router.push(`/(auth-admin)/client/${id}`);
   };
   
   const handleEditClient = (id: string) => {
     setEditModalVisible(true);
     bottomSheetRef.current?.close();
-    
   };
   
   const handleDeleteClient = (id: string) => {
@@ -162,94 +173,105 @@ export default function ThemedClientItem() {
 
   
   return (
-    <View style={[styles.themedContainer]}>
-      <SearchInput
-        value={search}
-        onChangeText={setSearch}
-        placeholder="Buscar por nome, referência ou endereço"
-      />
-
-      <ButtonAdd
-        onPress={() => setModalVisible(true)}
-        iconRight={<Plus size={24} color={colors.success} />} 
-        label="Cadastrar Cliente"
-      />
-     
-      {filteredClients.length === 0 && search.length > 0 ? (
-        <ThemedText style={[styles.noResults, { color: colors.text }]}>Nenhum cliente encontrado.</ThemedText>
-      ) : (
-        <FlatList
-          showsVerticalScrollIndicator={false}
-          
-          data={filteredClients}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => handleOpenBottomSheet(item.id, item.nome)}
-              style={[styles.clientContainer, { backgroundColor: colors.cardBackground }]}
-              activeOpacity={0.8}
-            >
-              <View style={styles.clientInfo}>
-                <Text style={[styles.name, { color: colors.text }]}>{item.nome}</Text>
-
-                {item.referencia && (
-                  <View style={styles.infoRow}>
-                    <Tag size={16} color={colors.icon} />
-                    <Text style={[styles.info, { color: colors.text }]}>{item.referencia}</Text>
-                  </View>
-                )}
-
-                {item.endereco && (
-                  <View style={styles.infoRow}>
-                    <MapPin size={16} color={colors.icon} />
-                    <Text style={[styles.info, { color: colors.text }]}>{item.endereco}</Text>
-                  </View>
-                )}
-              </View>
-
-              <TouchableOpacity onPress={() => handleOpenBottomSheet(item.id, item.nome)}>
-                <EllipsisVertical size={25} color={colors.icon} style={styles.chevronIcon} />
-              </TouchableOpacity>
-            </TouchableOpacity>
-          )}
-          ListFooterComponent={<View style={{ height: 75 }} />}
-        />
-      )}
-
-      <ConfirmModal
-        visible={deleteModalVisible}
-        onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
-        title="Excluir Cliente"
-        message="Tem certeza que deseja excluir este cliente?"
-        confirmText= "Excluir"
-        cancelText="Cancelar"
-    
-      />
-
-      <ClientBottomSheet
-        selectedClientId={selectedClientId} 
-        selectedClientName={selectedClientName}
-        colors={colors}
-        onAddPurchase={handleAddPurchase}
-        onViewPurchases={handleViewPurchases}
-        onEditClient={handleEditClient}
-        onDeleteClient={handleDeleteClient}
-        bottomSheetRef={bottomSheetRef}
-        snapPoints={snapPoints}
-        onChange={handleBottomSheetChange}
-      />
-
-      <EditClientModal 
-        visible={editModalVisible} 
-        onClose={() => setEditModalVisible(false) } 
-        updateClients={updateClients} 
-        clientId={selectedClientId} 
-      />
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={[styles.themedContainer, { flex: 1 }]}>
+          <SearchInput
+            value={search}
+            onChangeText={setSearch}
+            placeholder="Buscar por nome, referência ou endereço"
+          />
   
-      <CreateClientModal visible={modalVisible} onClose={() => setModalVisible(false) } updateClients={updateClients} />
-
-    </View>
+          <ButtonAdd
+            onPress={() => {
+              Keyboard.dismiss();
+              setModalVisible(true);
+            }}
+            iconRight={<Plus size={24} color={colors.success} />} 
+            label="Cadastrar Cliente"
+          />
+  
+          {filteredClients.length === 0 && search.length > 0 ? (
+            <ThemedText style={[styles.noResults, { color: colors.text }]}>Nenhum cliente encontrado.</ThemedText>
+          ) : (
+            <FlatList
+              showsVerticalScrollIndicator={false}
+              data={filteredClients}
+              keyExtractor={(item) => item.id}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    router.push(`/(auth-admin)/client/${item.id}`);
+                  }}
+                  style={[styles.clientContainer, { backgroundColor: colors.cardBackground }]}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.clientInfo}>
+                    <Text style={[styles.name, { color: colors.text }]}>{item.nome}</Text>
+                    {item.referencia && (
+                      <View style={styles.infoRow}>
+                        <Tag size={16} color={colors.icon} />
+                        <Text style={[styles.info, { color: colors.text }]}>{item.referencia}</Text>
+                      </View>
+                    )}
+                    {item.endereco && (
+                      <View style={styles.infoRow}>
+                        <MapPin size={16} color={colors.icon} />
+                        <Text style={[styles.info, { color: colors.text }]}>{item.endereco}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <TouchableOpacity onPress={() => {
+                    Keyboard.dismiss();
+                    handleOpenBottomSheet(item.id, item.nome);
+                  }}>
+                    <EllipsisVertical size={25} color={colors.icon} style={styles.chevronIcon} />
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              )}
+              ListFooterComponent={<View style={{ height: 75 }} />}
+            />
+          )}
+  
+          <ConfirmModal
+            visible={deleteModalVisible}
+            onConfirm={handleConfirmDelete}
+            onCancel={handleCancelDelete}
+            title="Excluir Cliente"
+            message="Tem certeza que deseja excluir este cliente?"
+            confirmText="Excluir"
+            cancelText="Cancelar"
+          />
+  
+          <ClientBottomSheet
+            selectedClientId={selectedClientId} 
+            selectedClientName={selectedClientName}
+            colors={colors}
+            onAddPurchase={handleAddPurchase}
+            onViewPurchases={handleViewPurchases}
+            onEditClient={handleEditClient}
+            onDeleteClient={handleDeleteClient}
+            bottomSheetRef={bottomSheetRef}
+            snapPoints={snapPoints}
+            onChange={handleBottomSheetChange}
+          />
+  
+          <EditClientModal 
+            visible={editModalVisible} 
+            onClose={() => setEditModalVisible(false)} 
+            updateClients={updateClients} 
+            clientId={selectedClientId} 
+          />
+  
+          <CreateClientModal visible={modalVisible} onClose={() => setModalVisible(false)} updateClients={updateClients} />
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
