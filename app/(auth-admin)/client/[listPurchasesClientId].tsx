@@ -1,13 +1,17 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Text, StyleSheet, ActivityIndicator, ScrollView, View, FlatList } from 'react-native';
+import { Text, StyleSheet, ActivityIndicator, View, FlatList, Keyboard, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 import { api } from '../../../src/services/api';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '../../../src/context/ThemeContext'; 
 import { Colors } from '../../../constants/Colors'; 
-import ThemedPurchaseItem from '@/components/ThemedPurchaseItem';
-import ListPurchaseClientItem from './components/ListPurchaseClientItem';
+import ThemedPurchaseItemAdmin from '@/components/ThemedPurchaseItemAdmin';
 import { useNavigation } from '@react-navigation/native';
+import React from 'react';
+import SearchInput from '@/app/components/SearchInput';
+import { format, parseISO } from 'date-fns'; // Importando funções do date-fns
+import ButtonAdd from '@/app/components/ButtonAdd';
+import { Plus } from 'lucide-react-native';
 
 interface Compra {
   id: string;
@@ -28,13 +32,16 @@ interface Client {
   nome: string;
 }
 
-export default function listPurchasesClientId() {
+export default function ListPurchasesClientId() {
   const { listPurchasesClientId } = useLocalSearchParams();
   const [compras, setCompras] = useState<{ compras: Compra[]; somaTotalCompras: number }>({ compras: [], somaTotalCompras: 0 });
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState(''); 
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
   const navigation = useNavigation();
+  
+  const [modalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     if (!listPurchasesClientId || typeof listPurchasesClientId !== 'string') return;
@@ -47,7 +54,6 @@ export default function listPurchasesClientId() {
         }
 
         const response = await api.get(`/clients/purchases/${listPurchasesClientId}/compras`);
-       
         setCompras({ compras: response.data.compras, somaTotalCompras: response.data.somaTotalCompras });
       } catch (error) {
         console.error('Erro ao buscar detalhes do cliente e compras:', error);
@@ -59,6 +65,58 @@ export default function listPurchasesClientId() {
     fetchClientAndPurchases();
   }, [listPurchasesClientId, navigation]);
 
+ 
+  // Função para calcular a soma total das compras filtradas
+  const calculateTotal = (filteredPurchases: Compra[]): number => {
+    return filteredPurchases.reduce((total, compra) => total + compra.totalCompra, 0);
+  };
+
+  // Função de formatação da data
+ // Função de formatação da data
+function formatDate(dateString: string): string {
+  if (!dateString) return '';
+
+  let date: Date;
+
+  // Verifica se a data já está em formato ISO e tenta parsear
+  try {
+    date = parseISO(dateString);
+  } catch (error) {
+    console.error("Erro ao analisar a data:", error);
+    return ''; // Se falhar no parse, retorna string vazia
+  }
+
+  // Verifica se a data é válida
+  if (isNaN(date.getTime())) return ''; // Retorna vazio caso seja inválida
+
+  // Retorna a data formatada no padrão brasileiro
+  return format(date, 'dd/MM/yyyy');
+}
+
+
+  const filteredCompras = compras.compras.filter((compra) => {
+
+
+    // Formatando as datas
+    const formattedDateCompra = compra.dataDaCompra ? formatDate(compra.dataDaCompra) : "";
+
+
+    const searchLower = searchQuery.toLowerCase();
+
+    const formatCurrency = (value: number): string => {
+      return value.toFixed(2).replace('.', ',');
+    };
+
+    return (
+      compra.descricaoCompra.toLowerCase().includes(searchLower) ||
+      formattedDateCompra.includes(searchLower) ||
+      formatCurrency(compra.totalCompra).includes(searchLower) ||
+      compra.totalCompra.toString().includes(searchLower)
+    );
+  });
+
+  const somaTotalFiltradas = calculateTotal(filteredCompras);
+
   if (loading) {
     return (
       <ThemedView style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
@@ -69,52 +127,135 @@ export default function listPurchasesClientId() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-    <ListPurchaseClientItem  />
-      {compras.somaTotalCompras > 0 && (
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Total em débitos: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(compras.somaTotalCompras)}
-          </Text>
-        </View>
+      <View style={styles.containerHeader}>
+        <SearchInput
+          value={searchQuery}
+          onChangeText={(text) => setSearchQuery(text)}
+          placeholder="Buscar por descrição, data ou valor"
+        />
+        <ButtonAdd
+          onPress={() => {
+            Keyboard.dismiss();
+            setModalVisible(true);
+          }}
+          iconRight={<Plus size={24} color={colors.success} />} 
+          label="Cadastrar Compra"
+        />
+      </View>
+   
+      <FlatList
+        showsVerticalScrollIndicator={false}
+        data={filteredCompras}
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContent}>
+            <Text style={[styles.noDataText, { color: colors.text }]}>Nenhuma compra encontrada.</Text>
+          </View>
+        )}
+        renderItem={({ item }) => <ThemedPurchaseItemAdmin {...item} />}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={[
+          styles.listContent,
+          { paddingBottom: 20 }, 
+          filteredCompras.length === 0 && styles.emptyListContent
+        ]} 
+        style={styles.flatList}
+      />
+      {somaTotalFiltradas > 0 && (
+        <>
+          <View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              borderTopWidth: theme === 'dark' ? 0.5 : 0.8,
+              borderColor: colors.border,
+              paddingLeft: 30,
+              paddingRight: 30,
+            }}
+          />
+          <View style={[styles.separator, { borderColor: colors.border }]} />
+          <View style={[styles.footer]}>
+            <View style={styles.footerTotalContainer}>
+              <Text style={[styles.footerTotalText, { color: colors.text }]}>
+                Subtotal
+              </Text>
+              <Text style={[styles.footerTotalValue, { color: colors.text }]}>
+                {`${new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                }).format(somaTotalFiltradas)}`}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => console.log('Pagamento clicado')}
+              style={[styles.roundButton, { backgroundColor: colors.success }]}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.roundButtonText]}>Pagamento</Text>
+            </TouchableOpacity>
+          </View>
+        </>
       )}
     </View>
   );
 }
 
-
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingBlockStart: 16,
+    paddingBlockEnd: 10,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  flatList: {
+    flex: 1, // Ocupa toda a altura disponível
+    paddingHorizontal: 12,
+  },
   listContent: {
-    paddingBottom: 20,
+    flexGrow: 1,
+  },
+  emptyListContent: {
+    flex: 1, // Ocupa toda a altura quando a lista está vazia
+    justifyContent: 'center', // Centraliza o conteúdo verticalmente
   },
   emptyContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1,
   },
   noDataText: {
     fontSize: 16,
     textAlign: 'center',
+    fontStyle: 'italic', // Aplica o itálico corretamente
+  },
+  separator: {
+    height: 1,
+    backgroundColor: 'transparent',
+    borderTopWidth: 0.7,
+    marginTop: 10,
   },
   footer: {
-    height: 80,
-    justifyContent: 'center',
+    height: 100,
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
     alignItems: 'center',
-    borderTopWidth: 0.5,
-    borderTopColor: '#8a8a8a',
+    paddingHorizontal: 25,
+    marginBottom: 10,
   },
   footerText: {
     fontSize: 20,
     fontWeight: 'bold',
+  },
+  roundButton: {
+    width: 140,
+    height: 45,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  
   },
   themedContainer: {
     flex: 1,
@@ -123,22 +264,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 20,
-  },
-  clientContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    marginVertical: 8,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  clientInfo: {
-    flex: 1,
   },
   name: {
     fontSize: 18,
@@ -156,5 +281,28 @@ const styles = StyleSheet.create({
   chevronIcon: {
     marginLeft: 16,
   },
-});
+  containerHeader: {
+   paddingHorizontal: 10,
+  },
+  footerTotalContainer: {
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    flexDirection: 'column',
+  },
+  footerTotalText: {
+    fontSize: 14,
+    color: 'gray',
 
+  },
+  footerTotalValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  roundButtonText: {
+    fontSize: 16,  
+    textAlign: 'center',
+    color: '#fff',
+    fontWeight: '600', 
+  }
+});

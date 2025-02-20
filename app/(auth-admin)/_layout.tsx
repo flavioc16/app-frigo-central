@@ -68,15 +68,7 @@ export default function RootLayout() {
               headerLeft: () => <BackButton />,
           }}
         />
-        <Stack.Screen
-          name="client/modal"
-          options={{
-            headerShown: true,
-            title: 'Cadastrar Cliente',
-            presentation: 'modal',
-              
-          }}
-          />
+    
         <Stack.Screen
           name="home/ModalConfig"
           options={{

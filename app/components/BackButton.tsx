@@ -1,8 +1,8 @@
 import { TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft } from 'lucide-react-native'; // Importando o ícone ArrowLeft
-import { Colors } from '../../constants/Colors'; // Adapte o caminho conforme necessário
-import { useTheme } from '../../src/context/ThemeContext'; // Certifique-se de importar o contexto correto
+import { ArrowLeft } from 'lucide-react-native'; 
+import { Colors } from '../../constants/Colors'; 
+import { useTheme } from '../../src/context/ThemeContext'; 
 
 const BackButton = () => {
   const navigation = useNavigation();
