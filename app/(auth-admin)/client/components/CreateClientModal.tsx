@@ -51,7 +51,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // Refs para os inputs
+
   const nameRef = useRef<TextInput>(null);
   const referenceRef = useRef<TextInput>(null);
   const addressRef = useRef<TextInput>(null);
