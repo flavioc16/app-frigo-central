@@ -25,7 +25,7 @@ import CreateClientModal from './CreateClientModal';
 import EditClientModal from './EditClientModal';
 import ClientBottomSheet from './ClientBottomSheet';
 import ConfirmModal from '@/app/components/ConfirmModal';
-
+import CreatePurchaseModal from '../../purchase/components/CreatePurchaseModal';
 
 export interface Client {
   id: string;
@@ -49,6 +49,8 @@ export default function ListClientItem() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
+  const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
+  const [purchaseClientId, setPurchaseClientId] = useState<string | string[]>([]);
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => {
@@ -80,16 +82,19 @@ export default function ListClientItem() {
   }, [snapPoints]);
 
   const handleAddPurchase = (id: string) => {
-    Alert.alert('Adicionar Compra', `ID do cliente: ${id}`);
+    setPurchaseModalVisible(true);
+    setPurchaseClientId(id);
+    bottomSheetRef.current?.close();
   };
   
   const handleViewPurchases = (id: string) => {
-    bottomSheetRef.current?.close();
     router.push(`/(auth-admin)/client/${id}`);
+    bottomSheetRef.current?.close();
   };
   
   const handleEditClient = (id: string) => {
     setEditModalVisible(true);
+    setSelectedClientId(id);
     bottomSheetRef.current?.close();
   };
   
@@ -236,7 +241,6 @@ export default function ListClientItem() {
               ListFooterComponent={<View style={{ height: 75 }} />}
             />
           )}
-  
           <ConfirmModal
             visible={deleteModalVisible}
             onConfirm={handleConfirmDelete}
@@ -246,7 +250,6 @@ export default function ListClientItem() {
             confirmText="Excluir"
             cancelText="Cancelar"
           />
-  
           <ClientBottomSheet
             selectedClientId={selectedClientId} 
             selectedClientName={selectedClientName}
@@ -259,14 +262,17 @@ export default function ListClientItem() {
             snapPoints={snapPoints}
             onChange={handleBottomSheetChange}
           />
-  
           <EditClientModal 
             visible={editModalVisible} 
             onClose={() => setEditModalVisible(false)} 
             updateClients={updateClients} 
             clientId={selectedClientId} 
           />
-  
+          <CreatePurchaseModal
+            visible={purchaseModalVisible} 
+             onClose={() => setPurchaseModalVisible(false)}
+            clienteId={purchaseClientId} 
+          />
           <CreateClientModal visible={modalVisible} onClose={() => setModalVisible(false)} updateClients={updateClients} />
         </View>
       </TouchableWithoutFeedback>

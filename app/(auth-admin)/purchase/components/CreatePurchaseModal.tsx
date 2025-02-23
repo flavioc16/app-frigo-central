@@ -36,7 +36,7 @@ export interface Compra {
 interface CreatePurchaseModalProps {
   visible: boolean;
   onClose: () => void;
-  updatePurchases: () => void;
+  updatePurchases?: () => void;
   clienteId: string | string[];
 }
 
@@ -110,6 +110,8 @@ const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({ visible, onCl
       setLoading(false);
       setSubmitted(false);
       onClose();
+      
+      if (updatePurchases)
       updatePurchases();
 
       const descricao = response.data.compra?.descricaoCompra || 'Nova compra';
