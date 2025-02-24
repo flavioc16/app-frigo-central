@@ -63,8 +63,7 @@ export default function ListClientItem() {
     }
   }, []);
 
-  const [currentSnapPoint, setCurrentSnapPoint] = useState<string>('25%');
-  const [overlayVisible, setOverlayVisible] = useState(false); 
+
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined);
   const [selectedClientName, setSelectedClientName] = useState<string | null>(null);
 
@@ -77,8 +76,10 @@ export default function ListClientItem() {
   }, []);
 
   const handleBottomSheetChange = useCallback((index: number) => {
-    setOverlayVisible(index !== -1);
-    setCurrentSnapPoint(snapPoints[index]);
+    if (index === -1) {
+      setSelectedClientId(undefined);
+      setSelectedClientName(null);
+    }
   }, [snapPoints]);
 
   const handleAddPurchase = (id: string) => {
