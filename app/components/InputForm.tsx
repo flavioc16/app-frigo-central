@@ -40,6 +40,30 @@ const InputForm = forwardRef<TextInput, InputFormProps>(
     const colors = Colors[theme] || Colors.light;
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
+    const formatCurrency = (text: string) => {
+      let numericValue = text.replace(/[^\d]/g, ""); // Remove tudo que não for número
+    
+      if (numericValue.length === 0) return "";
+    
+      let floatValue = (parseInt(numericValue, 10) / 100).toFixed(2); // Converte para float e mantém duas casas decimais
+    
+      return new Intl.NumberFormat("pt-BR", { 
+        style: "decimal", 
+        minimumFractionDigits: 2 
+      }).format(parseFloat(floatValue));
+    };
+
+    // Função que aplica formatação de acordo com o tipo de campo
+    const handleChangeText = (text: string) => {
+      // Se o keyboardType for numérico, aplica a formatação de moeda
+      if (keyboardType === "numeric" || keyboardType === "phone-pad") {
+        onChangeText?.(maskFunction ? maskFunction(text) : formatCurrency(text));
+      } else {
+        // Para outros tipos de campo, usa o comportamento original
+        onChangeText?.(maskFunction ? maskFunction(text) : text);
+      }
+    };
+
     return (
       <View style={styles.container}>
         {label && <Text style={[styles.label, { color: colors.text }]}>{label}</Text>}
@@ -50,7 +74,7 @@ const InputForm = forwardRef<TextInput, InputFormProps>(
             placeholder={placeholder}
             placeholderTextColor={colors.placeholder}
             value={value}
-            onChangeText={(text) => onChangeText?.(maskFunction ? maskFunction(text) : text)}
+            onChangeText={handleChangeText}
             secureTextEntry={secureTextEntry && !isPasswordVisible}
             autoFocus={autoFocus}
             autoCapitalize="none"
@@ -68,8 +92,8 @@ const InputForm = forwardRef<TextInput, InputFormProps>(
           )}
           {rightIcon && (
             <TouchableOpacity
-            onPress={onFocus}
-            style={styles.iconContainer}>
+              onPress={onFocus}
+              style={styles.iconContainer}>
               {rightIcon}
             </TouchableOpacity>
           )}
@@ -105,7 +129,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   iconContainer: {
-    padding: 5, // Ajuste de espaço ao redor do ícone
+    padding: 5, 
   },
   errorText: {
     fontSize: 12,

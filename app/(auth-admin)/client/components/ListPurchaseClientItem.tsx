@@ -264,7 +264,7 @@ export default function ListPurchaseClientItem() {
             visible={editModalVisible} 
             onClose={() => setEditModalVisible(false)} 
             updateClients={updateClients} 
-            clientId={selectedClientId} 
+            clientId={selectedClientId!} 
           />
   
           <CreateClientModal visible={modalVisible} onClose={() => setModalVisible(false)} updateClients={updateClients} />

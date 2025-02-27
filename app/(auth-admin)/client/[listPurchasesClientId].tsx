@@ -184,7 +184,7 @@ export default function ListPurchasesClientId() {
             }}
           />
         )}
-          <View style={[styles.separator, { borderColor: colors.border }]} />
+          <View style={[styles.separator, { borderColor: colors.cardBackground }]} />
           <View style={[styles.footer]}>
             <View style={styles.footerTotalContainer}>
               <Text style={[styles.footerTotalText, { color: colors.text }]}>
@@ -229,15 +229,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   flatList: {
-    flex: 1, // Ocupa toda a altura disponível
+    flex: 1,
     paddingHorizontal: 12,
   },
   listContent: {
     flexGrow: 1,
   },
   emptyListContent: {
-    flex: 1, // Ocupa toda a altura quando a lista está vazia
-    justifyContent: 'center', // Centraliza o conteúdo verticalmente
+    flex: 1, 
+    justifyContent: 'center', 
   },
   emptyContent: {
     flex: 1,
@@ -249,8 +249,7 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: 'transparent',
-    borderTopWidth: 0.3,
+    borderTopWidth: 0.5,
     marginTop: 10,
   },
   footer: {

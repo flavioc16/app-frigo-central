@@ -43,12 +43,11 @@ export interface Client {
   user?: User;
 }
 
-
 interface EditClientModalProps {
   visible: boolean;
   onClose: () => void;
   updateClients: () => void;
-  clientId?: string;  // Recebe a ID do cliente a ser editado
+  clientId: string;  // Recebe a ID do cliente a ser editado
 }
 
 const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, updateClients, clientId }) => {
@@ -57,8 +56,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
   const { user } = useContext(AuthContext); 
   const token = user?.token; 
 
-
-
+  const [id, setId] = useState<Client | null>(null);
   const [name, setName] = useState('');
   const [reference, setReference] = useState('');
   const [address, setAddress] = useState('');
@@ -104,6 +102,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
     }
   }, [clientId]);
 
+
   const fetchClientData = async () => {
     try {
       const response = await api.get(`/clients/${clientId}`, {
@@ -112,7 +111,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
   
       const clientData = response.data;
       
-
+      setId(clientData.id);
       setName(clientData?.nome || '');
       setReference(clientData?.referencia);
       setAddress(clientData?.endereco);
@@ -156,13 +155,12 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
     setLoading(true);
   
     try {
-      if (!clientId) {
+      if (!id) {
         throw new Error("ID do cliente não fornecido.");
       }
   
-      // Criação do objeto clientData
       const clientData: any = {
-        id: clientId,
+        id: id,
         nome: name,
         telefone: phone,
         endereco: address,
@@ -209,8 +207,6 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
     }
   };
   
-  
-
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={[styles.modalContainer, { backgroundColor: colors.background }]} >

@@ -6,8 +6,8 @@ import {
   TouchableOpacity, 
   StyleSheet, 
   ActivityIndicator, 
-  TextInput, 
-  Alert 
+  Alert, 
+  TextInput
 } from 'react-native';
 import { X } from 'lucide-react-native';
 import { useTheme } from '../../../../src/context/ThemeContext';
@@ -18,6 +18,7 @@ import { AuthContext } from '@/src/context/AuthContext';
 import { api } from '@/src/services/api';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import axios from 'axios';
+import Toast from 'react-native-toast-message';
 
 export interface Client {
   nome: string;
@@ -39,7 +40,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
   const { user } = useContext(AuthContext); 
-  const token = user?.token; 
+  const token = user?.token;
 
   const [name, setName] = useState('');
   const [reference, setReference] = useState('');
@@ -50,7 +51,6 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
 
   const nameRef = useRef<TextInput>(null);
   const referenceRef = useRef<TextInput>(null);
@@ -66,7 +66,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
   };
-  
+
   const maskPhone = (value: string): string => {
     value = value.replace(/\D/g, '');
     if (value.length > 11) value = value.slice(0, 11);
@@ -81,7 +81,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
   };
 
   const handleAddClient = async () => {
-    setSubmitted(true); 
+    setSubmitted(true);
 
     if (!name.trim()) {
       nameRef.current?.focus();
@@ -114,7 +114,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
     }
 
     setLoading(true);
-    
+
     try {
       const clientData: Client = {
         nome: name,
@@ -134,13 +134,13 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
 
       setLoading(false);
       setSubmitted(false);
-      onClose();  
-      updateClients(); 
+      onClose();
+      updateClients();
 
-      const newClientName = response.data.cliente?.nome || "Novo cliente";
-      Alert.alert('Sucesso!', `Cliente ${newClientName} cadastrado com sucesso.`, [
-        { text: 'OK' }
-      ]);
+      Toast.show({
+        type: 'success',
+        text1: `${name} cadastrado com sucesso!`,
+      });
 
       setName('');
       setReference('');
@@ -150,11 +150,10 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
       setUsername('');
       setPassword('');
 
-
     } catch (error) {
       setLoading(false);
       setSubmitted(false);
-    
+
       if (axios.isAxiosError(error)) {
         const errorMessage = error.response?.data?.error;
         Alert.alert('Erro', errorMessage, [
@@ -211,7 +210,6 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
             onChangeText={setPhone}
             placeholder="Telefone do cliente"
             maskFunction={maskPhone}
-           
           />
           <InputForm
             label="E-mail"
@@ -231,7 +229,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
             label="Senha"
             value={password}
             onChangeText={setPassword}
-            placeholder="Senha do cliente "
+            placeholder="Senha do cliente"
             secureTextEntry={true}
             error={submitted && !password.trim() ? 'A senha do cliente é obrigatória' : ''}
             ref={passwordRef}

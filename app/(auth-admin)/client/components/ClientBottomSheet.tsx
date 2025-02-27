@@ -34,7 +34,7 @@ interface ClientBottomSheetProps {
         <BottomSheetBackdrop
           {...props}
           disappearsOnIndex={-1}
-          appearsOnIndex={0}
+          appearsOnIndex={1}
           opacity={0.5}
           
         />

@@ -26,6 +26,7 @@ import EditClientModal from './EditClientModal';
 import ClientBottomSheet from './ClientBottomSheet';
 import ConfirmModal from '@/app/components/ConfirmModal';
 import CreatePurchaseModal from '../../purchase/components/CreatePurchaseModal';
+import Toast from 'react-native-toast-message';
 
 export interface Client {
   id: string;
@@ -116,7 +117,12 @@ export default function ListClientItem() {
           },
         });
         updateClients();
-        Alert.alert('Sucesso', 'Cliente excluído com sucesso!');
+        Toast.show({
+          type: 'success',
+          text1: 'Cliente excluído com sucesso!',
+          text1Style: { color: 'green' },
+          swipeable: true
+        })
         bottomSheetRef.current?.close();
       } catch (err) {
         Alert.alert('Erro', 'Não foi possível excluir o cliente.');
@@ -267,7 +273,7 @@ export default function ListClientItem() {
             visible={editModalVisible} 
             onClose={() => setEditModalVisible(false)} 
             updateClients={updateClients} 
-            clientId={selectedClientId} 
+            clientId={selectedClientId!} 
           />
           <CreatePurchaseModal
             visible={purchaseModalVisible} 
