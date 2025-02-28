@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Text, StyleSheet, ActivityIndicator, View, FlatList, Keyboard, TouchableOpacity, Platform } from 'react-native';
-import { useEffect, useState } from 'react';
+import { Text, StyleSheet, ActivityIndicator, View, FlatList, Keyboard, TouchableOpacity, InteractionManager, Platform, Alert } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../../src/services/api';
 import { ThemedView } from '@/components/ThemedView';
 import { useTheme } from '../../../src/context/ThemeContext'; 
@@ -13,6 +13,8 @@ import { format, parseISO, set } from 'date-fns'; // Importando funções do dat
 import ButtonAdd from '@/app/components/ButtonAdd';
 import { Plus } from 'lucide-react-native';
 import CreatePurchaseModal from '../../(auth-admin)/purchase/components/CreatePurchaseModal';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import PurchaseBottomSheet from '../../(auth-admin)/purchase/components/PurchaseBottomSheet';
 
 interface Compra {
   id: string;
@@ -42,6 +44,52 @@ export default function ListPurchasesClientId() {
   const colors = Colors[theme] || Colors.light;
   const navigation = useNavigation();
   const [createPurchaseModalVisible, setCreatePurchaseModalVisible] = useState(false);
+
+
+  const [purchaseId , setPurchaseId] = useState('');
+  const [purchaseName, setPurchaseName] = useState<string | null>(null);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const snapPoints = useMemo(() => {
+    if (Platform.OS === 'ios') {
+      return ['25.3%', '40%', '80%'];
+    } else if (Platform.OS === 'android') {
+      return ['30%', '60%', '85%'];  
+    } else {
+      return ['31%', '50%', '75%'];
+    }
+  }, []);
+
+  const handleOpenBottomSheet = useCallback((id: string, name: string) => {
+      InteractionManager.runAfterInteractions(() => {
+        setPurchaseId(id);
+        setPurchaseName(name);
+        bottomSheetRef.current?.present();
+      });
+    }, []);
+  
+    const handleBottomSheetChange = useCallback((index: number) => {
+      if (index === -1) {
+        setPurchaseId(''); 
+        bottomSheetRef.current?.dismiss();
+      }
+    }, [snapPoints]);
+
+    const onAddPurchase = (id: string) => {
+      console.log(`Adicionar nova compra para ID: ${id}`);
+    };
+  
+    const onViewPurchases = (id: string) => {
+      console.log(`Ver compras do ID: ${id}`);
+    };
+  
+    const onEditPurchase = (id: string) => {
+      console.log(`Editar compra ID: ${id}`);
+    };
+  
+    const onDeletePurchase = (id: string) => {
+      console.log(`Excluir compra ID: ${id}`);
+    };
+
 
   useEffect(() => {
     if (!listPurchasesClientId || typeof listPurchasesClientId !== 'string') return;
@@ -80,6 +128,8 @@ export default function ListPurchasesClientId() {
   // })
 
 
+
+
   const calculateTotal = (filteredPurchases: Compra[]): number => {
     return filteredPurchases.reduce((total, compra) => total + compra.totalCompra, 0);
   };
@@ -89,7 +139,7 @@ export default function ListPurchasesClientId() {
 
     let date: Date;
 
-    // Verifica se a data já está em formato ISO e tenta parsear
+  
     try {
       date = parseISO(dateString);
     } catch (error) {
@@ -159,7 +209,7 @@ export default function ListPurchasesClientId() {
             <Text style={[styles.noDataText, { color: colors.text }]}>Nenhuma compra encontrada.</Text>
           </View>
         )}
-        renderItem={({ item }) => <ThemedPurchaseItemAdmin {...item} />}
+        renderItem={({ item }) => <ThemedPurchaseItemAdmin onOptionsPress={handleOpenBottomSheet} {...item} />}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[
           styles.listContent,
@@ -212,6 +262,18 @@ export default function ListPurchasesClientId() {
         onClose={() => setCreatePurchaseModalVisible(false)}
         updatePurchases={updatePurchases}
         clienteId={listPurchasesClientId}
+      />
+      <PurchaseBottomSheet
+        selectedPurchaseId={purchaseId}
+        selectedPurchaseName={purchaseName}
+        colors={colors}
+        onAddPurchase={onAddPurchase}
+        onViewPurchases={onViewPurchases}
+        onEditPurchase={onEditPurchase}
+        onDeletePurchase={onDeletePurchase}
+        bottomSheetRef={bottomSheetRef}
+        snapPoints={['25%', '50%']}
+        onChange={handleBottomSheetChange}
       />
     </View>
   );
