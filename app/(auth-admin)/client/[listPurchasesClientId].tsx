@@ -28,6 +28,7 @@ import CreatePurchaseModal from '../../(auth-admin)/purchase/components/CreatePu
 import EditPurchaseModal from '../../(auth-admin)/purchase/components/EditPurchaseModal';
 import PurchaseBottomSheet from '../../(auth-admin)/purchase/components/PurchaseBottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import prompt from 'react-native-prompt-android';
 
 import ConfirmModal from '@/app/components/ConfirmModal';
 
@@ -89,8 +90,71 @@ export default function ListPurchasesClientId() {
     }
   }, [snapPoints]);
 
+  const handlePayment = async (id: string | string[], valor: number) => {
+    const idString = Array.isArray(id) ? id[0] : id;
+  
+    // Exibindo o valor no formato pt-BR, com o símbolo R$
+    const formattedValue = valor.toLocaleString('pt-BR', {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  
+    // Usando prompt com input
+    prompt(
+      'Pagamento',
+      `Valor total em débito: R$ ${formattedValue}`, // Exibe o valor com o R$
+      [
+        { text: 'Cancelar' },
+        {
+          text: 'Confirmar',
+          onPress: async (inputValue: string) => {
+            // Converte o valor de entrada de vírgula para ponto (se necessário)
+            const formattedInput = inputValue.replace(',', '.');
+            const finalValue = parseFloat(formattedInput);
+  
+            // Verifica se o valor digitado é maior que 0 e não ultrapassa o valor total
+            if (finalValue <= 0) {
+              Alert.alert('Erro', 'O valor deve ser maior que 0.');
+              return; // Não continua com o pagamento
+            }
+  
+            if (finalValue > valor) {
+              Alert.alert('Erro', 'O valor não pode ser maior que o valor total.');
+              return; // Não continua com o pagamento
+            }
+  
+            const paymentData = {
+              valorPagamento: finalValue, // Valor final com ponto como separador decimal
+              clienteId: id, // ID do cliente recebido via prop
+            };
+  
+            try {
+              // Chamada para registrar o pagamento
+              const response = await api.post("/pagamentos", paymentData);
+  
+              updatePurchases();
+              // Sucesso no pagamento
+              Alert.alert('Tudo certo!', 'O pagamento foi registrado com sucesso.');
+            } catch (error) {
+              // Caso haja erro ao enviar para o backend
+              Alert.alert('Erro', 'Ocorreu um erro ao realizar o pagamento.');
+            }
+          },
+        },
+      ],
+      {
+        type: 'plain-text', // Tipo de teclado
+        cancelable: true,
+        // Usar o valor formatado corretamente sem R$ dentro do campo de input
+        defaultValue: formattedValue, // Apenas o número no campo de input, sem R$
+        placeholder: 'Digite o valor', // Placeholder sem R$
+      }
+    );
+  };
+
   const onInfoPurchase = (id: string) => {
-    console.log(`Informações da compra para ID: ${id}`);
+    Alert.alert('Informações da compra', `ID: ${id}`);
   };
 
   const onEditPurchase = (id: string) => {
@@ -152,7 +216,7 @@ export default function ListPurchasesClientId() {
     };
 
     fetchClientAndPurchases();
-  }, [listPurchasesClientId, navigation, ]);
+  }, [listPurchasesClientId, navigation,]);
 
   const updatePurchases = async () => {
     try {
@@ -281,7 +345,7 @@ export default function ListPurchasesClientId() {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => console.log('Pagamento clicado')}
+              onPress={() => handlePayment(listPurchasesClientId, compras.somaTotalCompras)}
               style={[styles.roundButton, { backgroundColor: colors.success }]}
               activeOpacity={0.7}
             >

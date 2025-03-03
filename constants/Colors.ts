@@ -2,6 +2,8 @@ const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 const tintColorRed = '#b62828'; //COR DOS ICONES DO TABBAR
 const tintColorBlue = '#0a7ea4';
+const vencidaLight = '#ff4d4d';  // Vermelho suave, mas visível no modo claro  
+const vencidaDark = '#ff4d4d';   // Vermelho médio no escuro, sem perder contraste  
 
 export const Colors = {
   light: {
@@ -13,6 +15,7 @@ export const Colors = {
     bottomSheetBackground: '#cccccc',
     cardBackground: '#f1f1f1', //DEFINE A COR SE FOR NO MODO ESCURO E A COR BRANCA NAO DA PRA VER A HORA
     tint: tintColorRed,
+    vencida: vencidaLight,
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconDefaultDark: '#000',
@@ -39,6 +42,7 @@ export const Colors = {
     bottomSheetBackground: '#1A1D22',
     cardBackground: '#2A2D35', 
     tint: tintColorRed,
+    vencida: vencidaDark,
     icon: '#9BA1A6', //COR DOS ICONES DE DENTRO DO CARD
     tabIconDefault: '#9BA1A6',
     tabIconDefaultDark: '#9BA1A6',

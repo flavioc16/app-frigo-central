@@ -19,6 +19,7 @@ import { api } from '@/src/services/api';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
+import { useRouter } from 'expo-router';
 
 export interface Client {
   nome: string;
@@ -41,7 +42,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
   const colors = Colors[theme] || Colors.light;
   const { user } = useContext(AuthContext); 
   const token = user?.token;
-
+  const router = useRouter();
   const [name, setName] = useState('');
   const [reference, setReference] = useState('');
   const [address, setAddress] = useState('');
@@ -137,11 +138,6 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
       onClose();
       updateClients();
 
-      Toast.show({
-        type: 'success',
-        text1: `${name} cadastrado com sucesso!`,
-      });
-
       setName('');
       setReference('');
       setAddress('');
@@ -149,6 +145,8 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
       setEmail('');
       setUsername('');
       setPassword('');
+
+      router.push(`/(auth-admin)/client/${response.data.cliente.id}`);
 
     } catch (error) {
       setLoading(false);
@@ -183,7 +181,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
             label="Nome"
             value={name}
             onChangeText={(text) => setName(capitalizeFirstLetter(text))}
-            placeholder="Nome do cliente"
+            placeholder="Ex: Flávio Sousa de Castro"
             error={submitted && !name.trim() ? 'O nome do cliente é obrigatório' : ''}
             autoFocus
             ref={nameRef}
@@ -192,7 +190,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
             label="Referência"
             value={reference}
             onChangeText={(text) => setReference(capitalizeFirstLetter(text))}
-            placeholder="Referência do cliente"
+            placeholder="Ex: Irmão de Jocelia"
             error={submitted && !reference.trim() ? 'A referência do cliente é obrigatória' : ''}
             ref={referenceRef}
           />
@@ -200,7 +198,7 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
             label="Endereço"
             value={address}
             onChangeText={(text) => setAddress(capitalizeFirstLetter(text))}
-            placeholder="Endereço do cliente"
+            placeholder="Ex: Miguel Custódio - 294"
             error={submitted && !address.trim() ? 'O endereço do cliente é obrigatório' : ''}
             ref={addressRef}
           />
@@ -208,14 +206,15 @@ const CreateClientModal: React.FC<CreateClientModalProps> = ({ visible, onClose,
             label="Telefone"
             value={phone}
             onChangeText={setPhone}
-            placeholder="Telefone do cliente"
+            placeholder="(00) 00000-0000"
             maskFunction={maskPhone}
+            keyboardType='phone-pad'
           />
           <InputForm
             label="E-mail"
             value={email}
             onChangeText={setEmail}
-            placeholder="E-mail do cliente"
+            placeholder="Ex: flavio2008sousa@hotmail.com"
           />
           <InputForm
             label="Usuário"

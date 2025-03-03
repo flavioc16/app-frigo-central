@@ -223,7 +223,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
             label="Nome"
             value={name}
             onChangeText={(text) => setName(capitalizeFirstLetter(text))}
-            placeholder="Nome do cliente"
+            placeholder="Ex: Flávio Sousa de Castro"
             error={submitted && !name.trim() ? 'O nome do cliente é obrigatório' : ''}
             ref={nameRef}
           />
@@ -231,7 +231,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
             label="Referência"
             value={reference}
             onChangeText={(text) => setReference(capitalizeFirstLetter(text))}
-            placeholder="Referência do cliente"
+            placeholder="Ex: Irmão de Jocelia"
             error={submitted && !reference.trim() ? 'A referência do cliente é obrigatória' : ''}
             ref={referenceRef}
           />
@@ -239,7 +239,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
             label="Endereço"
             value={address}
             onChangeText={(text) => setAddress(capitalizeFirstLetter(text))}
-            placeholder="Endereço do cliente"
+            placeholder="Ex: Miguel Custódio - 294"
             error={submitted && !address.trim() ? 'O endereço do cliente é obrigatório' : ''}
             ref={addressRef}
           />
@@ -247,8 +247,9 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
             label="Telefone"
             value={phone}
             onChangeText={setPhone}
-            placeholder="Telefone do cliente"
+            placeholder="(00) 00000-0000"
             maskFunction={maskPhone}
+            keyboardType='phone-pad'
           />
           <InputForm
             label="E-mail"
