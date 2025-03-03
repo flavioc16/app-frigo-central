@@ -56,7 +56,7 @@ export default function ListClientItem() {
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => {
     if (Platform.OS === 'ios') {
-      return ['25.3%', '40%', '80%'];
+      return ['40%', '80%'];
     } else if (Platform.OS === 'android') {
       return ['30%', '60%', '85%'];  
     } else {
@@ -101,6 +101,7 @@ export default function ListClientItem() {
   };
   
   const handleDeleteClient = (id: string) => {
+    bottomSheetRef.current?.close();
     setClientToDelete(id); // Armazena o ID do cliente a ser excluído
     setDeleteModalVisible(true); // Abre o modal de confirmação
   };
@@ -117,12 +118,6 @@ export default function ListClientItem() {
           },
         });
         updateClients();
-        Toast.show({
-          type: 'success',
-          text1: 'Cliente excluído com sucesso!',
-          text1Style: { color: 'green' },
-          swipeable: true
-        })
         bottomSheetRef.current?.close();
       } catch (err) {
         Alert.alert('Erro', 'Não foi possível excluir o cliente.');
@@ -280,7 +275,11 @@ export default function ListClientItem() {
              onClose={() => setPurchaseModalVisible(false)}
             clienteId={purchaseClientId} 
           />
-          <CreateClientModal visible={modalVisible} onClose={() => setModalVisible(false)} updateClients={updateClients} />
+          <CreateClientModal 
+            visible={modalVisible} 
+            onClose={() => setModalVisible(false)} 
+            updateClients={updateClients} 
+          />
         </View>
       </TouchableWithoutFeedback>
     </KeyboardAvoidingView>

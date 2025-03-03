@@ -2,27 +2,25 @@ import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { Colors } from '../../../../constants/Colors';
-import { Plus, ShoppingCart, UserRoundPen, Trash2 } from "lucide-react-native";
+import { Info, FilePenLine, Trash2 } from "lucide-react-native";
 
 interface PurchaseBottomSheetProps {
     selectedPurchaseId: string | undefined;
     selectedPurchaseName: string | null;
     colors: typeof Colors.light | typeof Colors.dark;
-    onAddPurchase: (id: string) => void;
-    onViewPurchases: (id: string) => void;
+    onInfoPurchase: (id: string) => void;
     onEditPurchase: (id: string) => void;
     onDeletePurchase: (id: string) => void;
     bottomSheetRef: React.RefObject<BottomSheetModal>;
     snapPoints: (string | number)[];
     onChange: (index: number) => void;
 }
-  
+ 
 const PurchaseBottomSheet: React.FC<PurchaseBottomSheetProps> = ({
     selectedPurchaseId,
     selectedPurchaseName,
     colors,
-    onAddPurchase,
-    onViewPurchases,
+    onInfoPurchase,
     onEditPurchase,
     onDeletePurchase,
     bottomSheetRef,
@@ -79,22 +77,7 @@ const PurchaseBottomSheet: React.FC<PurchaseBottomSheetProps> = ({
           />
   
           <View style={{ marginTop: 20 }}>
-            <TouchableOpacity
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginBottom: 10,
-                paddingVertical: 12,
-                paddingHorizontal: 15,
-                justifyContent: 'space-between',
-                backgroundColor: colors.cardBackground,
-                borderRadius: 5,
-              }}
-              onPress={() => selectedPurchaseId && onAddPurchase(selectedPurchaseId)}
-            >
-              <Text style={{ color: colors.icon, fontSize: 17 }}>Adicionar Compra</Text>
-              <Plus size={26} color={colors.success} />
-            </TouchableOpacity>
+            
   
             <TouchableOpacity
               style={{
@@ -107,10 +90,10 @@ const PurchaseBottomSheet: React.FC<PurchaseBottomSheetProps> = ({
                 borderRadius: 5,
                 justifyContent: 'space-between',
               }}
-              onPress={() => selectedPurchaseId && onViewPurchases(selectedPurchaseId)}
+              onPress={() => selectedPurchaseId &&  onInfoPurchase(selectedPurchaseId)}
             >
-              <Text style={{ color: colors.icon, fontSize: 17 }}>Ver Compras</Text>
-              <ShoppingCart size={24} color={colors.icon} />
+              <Text style={{ color: colors.icon, fontSize: 17 }}>Informações</Text>
+              <Info size={24} color={colors.info} />
             </TouchableOpacity>
   
             <TouchableOpacity
@@ -128,7 +111,7 @@ const PurchaseBottomSheet: React.FC<PurchaseBottomSheetProps> = ({
               onPress={() => selectedPurchaseId && onEditPurchase(selectedPurchaseId)}
             >
               <Text style={{ color: colors.icon, fontSize: 17 }}>Editar Compra</Text>
-              <UserRoundPen size={24} color={colors.icon} />
+              <FilePenLine size={24} color={colors.icon} />
             </TouchableOpacity>
   
             <TouchableOpacity

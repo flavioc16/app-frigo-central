@@ -1,5 +1,16 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Text, StyleSheet, ActivityIndicator, View, FlatList, Keyboard, TouchableOpacity, InteractionManager, Platform, Alert } from 'react-native';
+import { 
+  Text, 
+  StyleSheet, 
+  ActivityIndicator, 
+  View, 
+  FlatList, 
+  Keyboard, 
+  TouchableOpacity, 
+  InteractionManager, 
+  Platform, 
+  Alert
+} from 'react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../../../src/services/api';
 import { ThemedView } from '@/components/ThemedView';
@@ -12,9 +23,13 @@ import SearchInput from '@/app/components/SearchInput';
 import { format, parseISO, set } from 'date-fns'; // Importando funções do date-fns
 import ButtonAdd from '@/app/components/ButtonAdd';
 import { Plus } from 'lucide-react-native';
+import axios from 'axios';
 import CreatePurchaseModal from '../../(auth-admin)/purchase/components/CreatePurchaseModal';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import EditPurchaseModal from '../../(auth-admin)/purchase/components/EditPurchaseModal';
 import PurchaseBottomSheet from '../../(auth-admin)/purchase/components/PurchaseBottomSheet';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+
+import ConfirmModal from '@/app/components/ConfirmModal';
 
 interface Compra {
   id: string;
@@ -44,14 +59,14 @@ export default function ListPurchasesClientId() {
   const colors = Colors[theme] || Colors.light;
   const navigation = useNavigation();
   const [createPurchaseModalVisible, setCreatePurchaseModalVisible] = useState(false);
-
-
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [editPurchaseModalVisible, setEditPurchaseModalVisible] = useState(false);
   const [purchaseId , setPurchaseId] = useState('');
   const [purchaseName, setPurchaseName] = useState<string | null>(null);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => {
     if (Platform.OS === 'ios') {
-      return ['25.3%', '40%', '80%'];
+      return ['34%', '80%'];
     } else if (Platform.OS === 'android') {
       return ['30%', '60%', '85%'];  
     } else {
@@ -60,37 +75,64 @@ export default function ListPurchasesClientId() {
   }, []);
 
   const handleOpenBottomSheet = useCallback((id: string, name: string) => {
-      InteractionManager.runAfterInteractions(() => {
-        setPurchaseId(id);
-        setPurchaseName(name);
-        bottomSheetRef.current?.present();
+    setPurchaseId(id);
+    setPurchaseName(name);
+  
+    InteractionManager.runAfterInteractions(() => {
+      bottomSheetRef.current?.present();
+    });
+  }, []);
+  
+  const handleBottomSheetChange = useCallback((index: number) => {
+    if (index === -1) {
+      bottomSheetRef.current?.close();
+    }
+  }, [snapPoints]);
+
+  const onInfoPurchase = (id: string) => {
+    console.log(`Informações da compra para ID: ${id}`);
+  };
+
+  const onEditPurchase = (id: string) => {
+    bottomSheetRef.current?.close();
+    setPurchaseId(id);
+    setEditPurchaseModalVisible(true);
+  };
+
+  const onDeletePurchase = (id: string) => {
+    bottomSheetRef.current?.close();
+    setPurchaseId(id);  
+    setConfirmModalVisible(true);
+  };
+ 
+  const handleConfirmDelete = async (id: string) => {
+    if (!id) {
+      return;
+    }
+    try {
+      const response = await api.delete(`/compras`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        data: { id },
       });
-    }, []);
-  
-    const handleBottomSheetChange = useCallback((index: number) => {
-      if (index === -1) {
-        setPurchaseId(''); 
-        bottomSheetRef.current?.dismiss();
+
+      updatePurchases();
+      
+    } catch (error) {
+
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.error || 'Erro ao excluir compra.';
+        Alert.alert('Erro!', errorMessage);
+      } else {
+        Alert.alert('Erro!', 'Erro desconhecido.');
       }
-    }, [snapPoints]);
-
-    const onAddPurchase = (id: string) => {
-      console.log(`Adicionar nova compra para ID: ${id}`);
-    };
-  
-    const onViewPurchases = (id: string) => {
-      console.log(`Ver compras do ID: ${id}`);
-    };
-  
-    const onEditPurchase = (id: string) => {
-      console.log(`Editar compra ID: ${id}`);
-    };
-  
-    const onDeletePurchase = (id: string) => {
-      console.log(`Excluir compra ID: ${id}`);
-    };
-
-
+    } finally {
+      setConfirmModalVisible(false);
+      setPurchaseId('');
+    }
+  };
+    
   useEffect(() => {
     if (!listPurchasesClientId || typeof listPurchasesClientId !== 'string') return;
     const fetchClientAndPurchases = async () => {
@@ -120,15 +162,6 @@ export default function ListPurchasesClientId() {
       console.error('Erro ao buscar detalhes do cliente e compras:', error);
     }
   }
-
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     updatePurchases();
-  //   } , 1000);
-  // })
-
-
-
 
   const calculateTotal = (filteredPurchases: Compra[]): number => {
     return filteredPurchases.reduce((total, compra) => total + compra.totalCompra, 0);
@@ -267,13 +300,26 @@ export default function ListPurchasesClientId() {
         selectedPurchaseId={purchaseId}
         selectedPurchaseName={purchaseName}
         colors={colors}
-        onAddPurchase={onAddPurchase}
-        onViewPurchases={onViewPurchases}
+        onInfoPurchase={onInfoPurchase}
         onEditPurchase={onEditPurchase}
         onDeletePurchase={onDeletePurchase}
         bottomSheetRef={bottomSheetRef}
-        snapPoints={['25%', '50%']}
+        snapPoints={snapPoints}
         onChange={handleBottomSheetChange}
+      />
+      <ConfirmModal
+        idToDelete={purchaseId}
+        visible={confirmModalVisible}
+        onConfirm={() => handleConfirmDelete(purchaseId)}
+        onCancel={() => setConfirmModalVisible(false)}
+        title="Excluir Compra"
+        message="Tem certeza de que deseja excluir essa compra?"
+      />
+      <EditPurchaseModal
+        visible={editPurchaseModalVisible}
+        onClose={() => setEditPurchaseModalVisible(false)}
+        updatePurchases={updatePurchases}
+        purchaseId={purchaseId}
       />
     </View>
   );
@@ -292,7 +338,7 @@ const styles = StyleSheet.create({
   },
   flatList: {
     flex: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 15,
   },
   listContent: {
     flexGrow: 1,
@@ -359,7 +405,7 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
   containerHeader: {
-   paddingHorizontal: 10,
+   paddingHorizontal: 15,
   },
   footerTotalContainer: {
     justifyContent: 'flex-start',

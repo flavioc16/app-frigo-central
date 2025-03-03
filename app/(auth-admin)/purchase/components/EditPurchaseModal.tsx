@@ -4,12 +4,13 @@ import {
   View, 
   Text, 
   TouchableOpacity,
-  Pressable, 
   StyleSheet, 
   ActivityIndicator, 
   TextInput, 
   Alert, 
-  Platform
+  Platform, 
+  FlatList, 
+  Pressable
 } from 'react-native';
 import { Calendar, X } from 'lucide-react-native';
 import { useTheme } from '../../../../src/context/ThemeContext';
@@ -18,14 +19,13 @@ import InputForm from '@/app/components/InputForm';
 import { ThemedText } from '@/components/ThemedText';
 import { AuthContext } from '@/src/context/AuthContext'; 
 import { api } from '@/src/services/api';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import DateInput from '@/app/components/inputFormDate';
+import InputFormDropdown from './InputFormDropdown';
+import InputFormDropdownProducts from './InputFormDropdownProducts';
 
 export interface Compra {
   descricaoCompra: string;
-  dataDaCompra?: string;
+  dataDaCompra: string;
   valorInicialCompra: number;
   totalCompra: number;
   tipoCompra: number;
@@ -33,102 +33,163 @@ export interface Compra {
   statusCompra: number;
 }
 
-interface CreatePurchaseModalProps {
-  visible: boolean;
-  onClose: () => void;
-  updatePurchases: () => void;
-  clienteId: string | string[];
+export interface Produto {
+  id: string;
+  nome: string;
+  descricao: string;
+  precoAVista: number;
+  precoAPrazo: number;
 }
 
-const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({ visible, onClose, updatePurchases, clienteId }) => {
+interface EditPurchaseModalProps {
+  visible: boolean;
+  onClose: () => void;
+  updatePurchases?: () => void;
+  purchaseId: string | null;
+  onCloseBottomSheet?: () => void;
+
+}
+
+const EditPurchaseModal: React.FC<EditPurchaseModalProps> = ({ onCloseBottomSheet, visible, onClose, updatePurchases, purchaseId }) => {
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
   const { user } = useContext(AuthContext); 
   const token = user?.token; 
 
+  const [id, setId] = useState('');
   const [descricaoCompra, setDescricaoCompra] = useState('');
   const [dataDaCompra, setDataDaCompra] = useState(new Date());
-  const [dateOfBirth, setDateOfBirth] = useState<string>('');
   const [totalCompra, setTotalCompra] = useState('');
   const [tipoCompra, setTipoCompra] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const descricaoRef = useRef<TextInput>(null);
   const dataRef = useRef<TextInput>(null);
   const totalRef = useRef<TextInput>(null);
   const tipoRef = useRef<TextInput>(null);
 
-  // Focar no input de descrição quando o modal é aberto
+  const formatCurrency = (value: string | number) => {
+    // Se for uma string, converta para número, considerando que o ponto já é um separador decimal
+    const numericValue = typeof value === 'string' ? parseFloat(value.replace(",", ".")) : value;
+  
+    // Formata o valor como um número com 2 casas decimais
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(numericValue);
+  };
+  
+  const unformatCurrency = (value: string) => {
+    return value.replace(/\./g, '').replace(',', '.');
+  };
+
+  const capitalizeFirstLetter = (text: string) => {
+    return text
+      .toLowerCase()
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
   useEffect(() => {
-    if (visible) {
-      descricaoRef.current?.focus();
-    }
-  }, [visible]);
+    const fetchPurchase = async () => {
+      if (!purchaseId || !token || !visible) return;
+  
+      setIsLoading(true);
+      try {
+        const response = await api.get(`/compras/${purchaseId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        const purchase = response.data;
+        setId(purchase.id); // Não há mais dependência do 'id' aqui
+        setDescricaoCompra(purchase.descricaoCompra);
+        setDataDaCompra(new Date(purchase.dataDaCompra));
+        setTotalCompra(formatCurrency(purchase.totalCompra.toString())); // Formata o valor ao carregar
+        setTipoCompra(purchase.tipoCompra.toString());
+      } catch (error) {
+        console.error("Erro ao buscar compra", error);
+        Alert.alert("Erro", "Não foi possível carregar os dados da compra.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    fetchPurchase();
+  }, [purchaseId, visible, token]);
+  
+  useEffect(() => {
+    const fetchProdutos = async () => {
+      try {
+        const response = await api.get('/produtos', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (Array.isArray(response.data)) {
+          setProdutos(response.data);
+        } else {
+          console.error("Produtos não encontrados.");
+        }
+      } catch (error) {
+        console.error("Erro ao buscar produtos", error);
+        Alert.alert("Erro", "Não foi possível carregar os produtos.");
+      }
+    };
 
-  const handleAddPurchase = async () => {
+    if (token) {
+      fetchProdutos();
+    }
+  }, [token]);
+
+  const handleUpdatePurchase = async () => {
     setSubmitted(true);
-
-    if (!descricaoCompra.trim()) {
-      descricaoRef.current?.focus();
-      return;
-    }
-    if (!totalCompra.trim()) {
-      totalRef.current?.focus();
-      return;
-    }
-    if (!tipoCompra.trim()) {
-      tipoRef.current?.focus();
-      return;
-    }
-
+  
+    // Verifica se o token e o ID da compra estão presentes
     if (!token) {
-      console.error('Usuário não autenticado. Token não encontrado.');
+      console.error("Usuário não autenticado ou ID da compra não encontrado.");
       return;
     }
 
     setLoading(true);
-
+  
     try {
-      const purchaseData: Compra = {
+      // Prepara os dados da compra para serem enviados ao backend
+      const purchaseData = {
+        id: id, 
         descricaoCompra,
-        dataDaCompra : dataDaCompra.toString(),
-        totalCompra: parseFloat(totalCompra.replace(',', '.')),
-        valorInicialCompra: parseFloat(totalCompra.replace(',', '.')),
-        statusCompra: 0,
+        totalCompra: parseFloat(unformatCurrency(totalCompra)), 
         tipoCompra: parseInt(tipoCompra, 10),
-        clienteId,
+        statusCompra: 0, 
+        created_at: new Date().toISOString(), 
+        dataDaCompra: dataDaCompra.toISOString(), 
       };
-
-      const response = await api.post('/compras', purchaseData, {
+  
+      await api.put('/compras', purchaseData, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
+  
+    
       setLoading(false);
-      setSubmitted(false);
       onClose();
-      updatePurchases();
-
-      const descricao = response.data.compra?.descricaoCompra || 'Nova compra';
-      Alert.alert('Sucesso!', `Compra "${descricao}" cadastrada com sucesso.`, [{ text: 'OK' }]);
-
-      setDescricaoCompra('');
-      setDataDaCompra(new Date());
-      setTotalCompra('');
-      setTipoCompra('');
+  
+       if (onCloseBottomSheet) onCloseBottomSheet()
+      if (updatePurchases) updatePurchases();
+       
     } catch (error) {
+      
       setLoading(false);
-      setSubmitted(false);
-
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.error;
-        Alert.alert('Erro', errorMessage, [{ text: 'OK' }]);
-      } else {
-        Alert.alert('Erro', 'Erro desconhecido. Tente novamente.', [{ text: 'OK' }]);
-      }
+      console.error("Erro ao atualizar compra", error);
+      Alert.alert("Erro", "Não foi possível atualizar a compra.");
     }
   };
 
@@ -140,129 +201,129 @@ const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({ visible, onCl
     if (event.type === 'set' && selectedDate) {
       const currentDate = selectedDate || dataDaCompra;
       setDataDaCompra(currentDate);
-  
-      if (Platform.OS === 'android') {
-        toggleDatePicker();
-        setDateOfBirth(currentDate.toDateString());
-      }
     } else if (event.type === 'dismissed' || !selectedDate) {
-      toggleDatePicker(); // Fecha o date picker se o usuário cancelar
+      toggleDatePicker();
     }
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-        <KeyboardAwareScrollView 
-          contentContainerStyle={styles.scrollContent} 
-          keyboardShouldPersistTaps="always"
-          showsVerticalScrollIndicator={false}
-          style={styles.modalContent}
-        >
-          <Text style={[styles.modalTitle, { color: colors.text }]}>Cadastrar Compra</Text>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.tint} />
+          </View>
+        ) : (
+          <FlatList
+            data={[1]}
+            keyExtractor={(item) => item.toString()}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+            renderItem={() => (
+              <View style={styles.modalContent}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Editar Compra</Text>
 
-          <InputForm
-            label="Descrição"
-            value={descricaoCompra}
-            onChangeText={setDescricaoCompra}
-            placeholder="Descrição da compra"
-            error={submitted && !descricaoCompra.trim() ? 'A descrição é obrigatória' : ''}
-            autoFocus
-            ref={descricaoRef}
-          />
+                {!showPicker && (
+                  <Pressable onPress={toggleDatePicker}>
+                    <InputForm
+                      label="Data"
+                      value={dataDaCompra.toLocaleDateString('pt-BR')}
+                      error={submitted && !dataDaCompra.toISOString().trim() ? 'A data é obrigatória' : ''}
+                      editable={false}
+                      ref={dataRef}
+                      onPressIn={toggleDatePicker}
+                      onFocus={toggleDatePicker}
+                      rightIcon={<Calendar size={20} color={colors.icon} />}
+                    />
+                  </Pressable>
+                )}
+                {showPicker && (
+                  <View style={{ alignItems: 'center', flex: 1 }}>
+                    <DateTimePicker
+                      value={dataDaCompra}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'inline' : 'calendar'}
+                      onChange={onChange}
+                      locale="pt-BR"
+                      style={{
+                        width: '100%',
+                        backgroundColor: theme === 'dark' ? '#2A2D35' : '#fff',
+                        borderRadius: 8,
+                      }}
+                    />
+                    {Platform.OS === 'ios' && (
+                      <View style={{ flexDirection: 'row', gap: 130, marginTop: 10 }}>
+                        <TouchableOpacity
+                          onPress={() => {
+                            setShowPicker(false);
+                          }}
+                          style={{
+                            backgroundColor: '#ae2121',
+                            borderRadius: 8,
+                            padding: 8,
+                            width: 100,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Text style={{ color: '#fff', fontWeight: 'bold' }}>Confirmar</Text>
+                        </TouchableOpacity>
+    
+                        <TouchableOpacity
+                          onPress={toggleDatePicker}
+                          style={{
+                            backgroundColor: '#7e1a1a',
+                            borderRadius: 8,
+                            padding: 8,
+                            width: 100,
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Text style={{ color: '#fff', fontWeight: 'bold' }}>Cancelar</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+                )}
 
-          {!showPicker && (
-            <Pressable onPress={toggleDatePicker}>
-              <InputForm
-                label="Data da Compra"
-                value={dataDaCompra.toLocaleDateString('pt-BR')}
-                error={submitted && !dataDaCompra.toISOString().trim() ? 'A data é obrigatória' : ''}
-                editable={false}
-                ref={dataRef}
-                onPressIn={toggleDatePicker}
-                onFocus={toggleDatePicker}
-                rightIcon={<Calendar size={20} color={colors.icon} />} 
-              />
-            </Pressable>
-          )}
-          {showPicker && (
-            <View style={{ alignItems: 'center', flex: 1  }}>
-              <DateTimePicker
-                value={dataDaCompra}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'inline' : 'calendar'}
-                onChange={onChange}
-                locale="pt-BR"
-                style={{ width: '100%', backgroundColor: theme === 'dark' ? '#2A2D35' : '#2A2D35', borderRadius: 8, }}
-              />
-              {Platform.OS === 'ios' && (
-                <View style={{ flexDirection: 'row', gap: 130, marginTop: 10 }}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      setShowPicker(false);
-                      setDateOfBirth(dataDaCompra.toLocaleDateString('pt-BR'));
-                    }}
-                    style={{
-                      backgroundColor: '#ae2121',
-                      borderRadius: 8,
-                      padding: 8,
-                      width: 100,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>Confirmar</Text>
-                  </TouchableOpacity>
+                <InputFormDropdownProducts
+                  label="Descrição"
+                  placeholder="Digite ou selecione um produto..."
+                  value={capitalizeFirstLetter(descricaoCompra)}
+                  setValue={setDescricaoCompra}
+                  produtos={produtos}
+                />
+                <InputForm
+                  label="Total"
+                  value={totalCompra}
+                  onChangeText={(text) => setTotalCompra(formatCurrency(text))} // Formata o valor ao digitar
+                  placeholder="0,00"
+                  keyboardType="numeric"
+                  ref={totalRef}
+                />
+                <InputFormDropdown
+                  label="Tipo de Serviço"
+                  value={tipoCompra}
+                  setValue={setTipoCompra}
+                />
 
-                  <TouchableOpacity
-                    onPress={toggleDatePicker}
-                    style={{
-                      backgroundColor: '#7e1a1a',
-                      borderRadius: 8,
-                      padding: 8,
-                      width: 100,
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>Cancelar</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          )}
-          <InputForm
-            label="Valor"
-            value={totalCompra}
-            onChangeText={setTotalCompra}
-            placeholder="0,00"
-            error={submitted && !totalCompra.trim() ? 'O valor é obrigatório' : ''}
-            keyboardType="numeric"
-            ref={totalRef}
-          />
-
-          <InputForm
-            label="Tipo"
-            value={tipoCompra}
-            onChangeText={setTipoCompra}
-            placeholder="1 para crédito, 2 para débito"
-            error={submitted && !tipoCompra.trim() ? 'O tipo é obrigatório' : ''}
-            keyboardType="numeric"
-            ref={tipoRef}
-          />
-
-          <TouchableOpacity 
-            onPress={handleAddPurchase} 
-            style={[styles.button, loading && styles.disabledButton]} 
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-                Cadastrar
-              </ThemedText>
+                <TouchableOpacity
+                  onPress={handleUpdatePurchase}
+                  style={[styles.button, loading && styles.disabledButton]}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <ThemedText type="defaultSemiBold" style={styles.buttonText}>
+                      Atualizar
+                    </ThemedText>
+                  )}
+                </TouchableOpacity>
+              </View>
             )}
-          </TouchableOpacity>
-        </KeyboardAwareScrollView>
+          />
+        )}
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
           <X size={30} color={colors.icon} />
         </TouchableOpacity>
@@ -276,21 +337,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     paddingTop: 30,
-    alignItems: 'center',
   },
   modalContent: {
-    width: '97%',
-    borderRadius: 10,
-    padding: 20,
-  },
-  scrollContent: {
-    paddingBottom: 100,
-    paddingTop: 10,
+    padding: 25,
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    marginBottom: 10,
     textAlign: 'center',
   },
   closeButton: {
@@ -311,16 +364,17 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontSize: 16,
   },
-  datePickerContainer: {
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  scrollContent: {
+    paddingBottom: 100,
+    paddingTop: 10,
+  },
+  loadingContainer: {
+    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center', 
   },
 });
 
-export default CreatePurchaseModal;
+export default EditPurchaseModal;

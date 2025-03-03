@@ -11,6 +11,7 @@ interface ConfirmModalProps {
   message: string; // Mensagem do modal
   confirmText?: string; // Texto do botão de confirmação (opcional)
   cancelText?: string; // Texto do botão de cancelamento (opcional)
+  idToDelete?: string
 }
 
 export default function ConfirmModal({

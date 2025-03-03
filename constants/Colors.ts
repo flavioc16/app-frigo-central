@@ -1,6 +1,7 @@
 const tintColorLight = '#0a7ea4';
 const tintColorDark = '#fff';
 const tintColorRed = '#b62828'; //COR DOS ICONES DO TABBAR
+const tintColorBlue = '#0a7ea4';
 
 export const Colors = {
   light: {
@@ -23,9 +24,8 @@ export const Colors = {
     buttonText: '#fff', 
     success: '#4caf50', 
     error: '#f44336', 
+    info: '#1976D2',
     warning: '#ff9800',
-    
-
     switchTrackFalse: '#ccc',
     switchTrackTrue: '#4cd137', 
     switchThumb: '#fff',        
@@ -50,6 +50,7 @@ export const Colors = {
     buttonText: '#fff',
     success: '#4caf50',
     error: '#f44336',
+    info: '#1976D2',
     warning: '#ff9800',
     switchTrackFalse: '#555',  // Cor para o estado "off"
     switchTrackTrue: '#4cd137', // Cor para o estado "on"
