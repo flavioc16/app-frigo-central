@@ -16,6 +16,7 @@ export const Colors = {
     cardBackground: '#f1f1f1', //DEFINE A COR SE FOR NO MODO ESCURO E A COR BRANCA NAO DA PRA VER A HORA
     tint: tintColorRed,
     vencida: vencidaLight,
+    overlay: 'rgba(0, 0, 0, 0.4)',
     icon: '#687076',
     tabIconDefault: '#687076',
     tabIconDefaultDark: '#000',
@@ -43,6 +44,7 @@ export const Colors = {
     cardBackground: '#2A2D35', 
     tint: tintColorRed,
     vencida: vencidaDark,
+    overlay: 'rgba(0, 0, 0, 0.6)', 
     icon: '#9BA1A6', //COR DOS ICONES DE DENTRO DO CARD
     tabIconDefault: '#9BA1A6',
     tabIconDefaultDark: '#9BA1A6',

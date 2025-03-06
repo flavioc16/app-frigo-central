@@ -20,7 +20,7 @@ import ThemedPurchaseItemAdmin from '@/components/ThemedPurchaseItemAdmin';
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import SearchInput from '@/app/components/SearchInput';
-import { format, parseISO, set } from 'date-fns'; // Importando funções do date-fns
+import { format, parseISO } from 'date-fns';
 import ButtonAdd from '@/app/components/ButtonAdd';
 import { Plus } from 'lucide-react-native';
 import axios from 'axios';
@@ -28,9 +28,9 @@ import CreatePurchaseModal from '../../(auth-admin)/purchase/components/CreatePu
 import EditPurchaseModal from '../../(auth-admin)/purchase/components/EditPurchaseModal';
 import PurchaseBottomSheet from '../../(auth-admin)/purchase/components/PurchaseBottomSheet';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import prompt from 'react-native-prompt-android';
-
+import PaymentModal from '../../(auth-admin)/payment/components/CreatePaymentModal';
 import ConfirmModal from '@/app/components/ConfirmModal';
+import PurchaseInfoModal from '../../(auth-admin)/purchase/components/InfoPurchaseModal';
 
 interface Compra {
   id: string;
@@ -61,6 +61,8 @@ export default function ListPurchasesClientId() {
   const navigation = useNavigation();
   const [createPurchaseModalVisible, setCreatePurchaseModalVisible] = useState(false);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [infoPurchaseModalVisible, setInfoPurchaseModalVisible] = useState(false);
   const [editPurchaseModalVisible, setEditPurchaseModalVisible] = useState(false);
   const [purchaseId , setPurchaseId] = useState('');
   const [purchaseName, setPurchaseName] = useState<string | null>(null);
@@ -74,6 +76,7 @@ export default function ListPurchasesClientId() {
       return ['31%', '50%', '75%'];
     }
   }, []);
+
 
   const handleOpenBottomSheet = useCallback((id: string, name: string) => {
     setPurchaseId(id);
@@ -90,71 +93,10 @@ export default function ListPurchasesClientId() {
     }
   }, [snapPoints]);
 
-  const handlePayment = async (id: string | string[], valor: number) => {
-    const idString = Array.isArray(id) ? id[0] : id;
-  
-    // Exibindo o valor no formato pt-BR, com o símbolo R$
-    const formattedValue = valor.toLocaleString('pt-BR', {
-      style: 'decimal',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-  
-    // Usando prompt com input
-    prompt(
-      'Pagamento',
-      `Valor total em débito: R$ ${formattedValue}`, // Exibe o valor com o R$
-      [
-        { text: 'Cancelar' },
-        {
-          text: 'Confirmar',
-          onPress: async (inputValue: string) => {
-            // Converte o valor de entrada de vírgula para ponto (se necessário)
-            const formattedInput = inputValue.replace(',', '.');
-            const finalValue = parseFloat(formattedInput);
-  
-            // Verifica se o valor digitado é maior que 0 e não ultrapassa o valor total
-            if (finalValue <= 0) {
-              Alert.alert('Erro', 'O valor deve ser maior que 0.');
-              return; // Não continua com o pagamento
-            }
-  
-            if (finalValue > valor) {
-              Alert.alert('Erro', 'O valor não pode ser maior que o valor total.');
-              return; // Não continua com o pagamento
-            }
-  
-            const paymentData = {
-              valorPagamento: finalValue, // Valor final com ponto como separador decimal
-              clienteId: id, // ID do cliente recebido via prop
-            };
-  
-            try {
-              // Chamada para registrar o pagamento
-              const response = await api.post("/pagamentos", paymentData);
-  
-              updatePurchases();
-              // Sucesso no pagamento
-              Alert.alert('Tudo certo!', 'O pagamento foi registrado com sucesso.');
-            } catch (error) {
-              // Caso haja erro ao enviar para o backend
-              Alert.alert('Erro', 'Ocorreu um erro ao realizar o pagamento.');
-            }
-          },
-        },
-      ],
-      {
-        type: 'plain-text', // Tipo de teclado
-        cancelable: true,
-        // Usar o valor formatado corretamente sem R$ dentro do campo de input
-        defaultValue: formattedValue, // Apenas o número no campo de input, sem R$
-        placeholder: 'Digite o valor', // Placeholder sem R$
-      }
-    );
-  };
-
   const onInfoPurchase = (id: string) => {
-    Alert.alert('Informações da compra', `ID: ${id}`);
+    bottomSheetRef.current?.close();
+    setPurchaseId(id);
+    setInfoPurchaseModalVisible(true);
   };
 
   const onEditPurchase = (id: string) => {
@@ -226,6 +168,10 @@ export default function ListPurchasesClientId() {
       console.error('Erro ao buscar detalhes do cliente e compras:', error);
     }
   }
+
+  useEffect(() => {
+    updatePurchases();
+  }, [compras]);
 
   const calculateTotal = (filteredPurchases: Compra[]): number => {
     return filteredPurchases.reduce((total, compra) => total + compra.totalCompra, 0);
@@ -345,7 +291,7 @@ export default function ListPurchasesClientId() {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => handlePayment(listPurchasesClientId, compras.somaTotalCompras)}
+              onPress={() => setPaymentModalVisible(true)}
               style={[styles.roundButton, { backgroundColor: colors.success }]}
               activeOpacity={0.7}
             >
@@ -384,6 +330,20 @@ export default function ListPurchasesClientId() {
         onClose={() => setEditPurchaseModalVisible(false)}
         updatePurchases={updatePurchases}
         purchaseId={purchaseId}
+      />
+
+      <PaymentModal
+        visible={paymentModalVisible}
+        onClose={() => setPaymentModalVisible(false)}
+        id={listPurchasesClientId}
+        valor={compras.somaTotalCompras}
+        updatePurchases={() => updatePurchases()}
+      />
+
+      <PurchaseInfoModal 
+        visible={infoPurchaseModalVisible} 
+        onClose={() => setInfoPurchaseModalVisible(false)} 
+        purchaseId={purchaseId ?? ''} 
       />
     </View>
   );
