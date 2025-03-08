@@ -26,7 +26,7 @@ import CreateReminderModal from "../components/CreateReminderModal";
 import EditReminderModal from "../components/EditReminderModal";
 import ReminderBottomSheet from "../components/ReminderBottomSheet";
 import ConfirmModal from "@/app/components/ConfirmModal";
-import { toZonedTime, format } from 'date-fns-tz';
+import { format, parseISO } from 'date-fns';
 
 export interface Reminder {
   id: string;
@@ -64,27 +64,11 @@ export default function ListReminderItem() {
       bottomSheetRef.current?.present();
     });
   }, []);
+
   const formatDate = (dateString: string) => {
-    if (!dateString) return "Data inválida"; // Evita erro se a string estiver vazia
-  
-    // Tenta criar um objeto Date a partir da string
     const date = new Date(dateString);
-  
-    // Verifica se a data é válida
-    if (isNaN(date.getTime())) {
-      return "Data inválida"; // Retorna um erro caso a data seja inválida
-    }
-  
-    // Define o fuso horário correto (Brasil)
-    const timeZone = "America/Sao_Paulo";
-  
-    // Converte a data UTC para o fuso horário local
-    const zonedDate = toZonedTime(date, timeZone);
-  
-    // Formata a data no padrão brasileiro (DD/MM/YYYY)
-    return format(zonedDate, "dd/MM/yyyy", { timeZone });
+    return new Intl.DateTimeFormat("pt-BR").format(date);
   };
-  
 
   const handleBottomSheetChange = useCallback((index: number) => {
     if (index === -1) {
@@ -200,25 +184,36 @@ export default function ListReminderItem() {
             <ThemedText style={[styles.noResults, { color: colors.text }]}>Nenhum lembrete encontrado.</ThemedText>
           ) : (
             <FlatList
-              showsVerticalScrollIndicator={false}
-              data={filteredReminders}
-              keyExtractor={(item) => item.id}
-              keyboardShouldPersistTaps="handled"
-              renderItem={({ item }) => (
-                <View style={[styles.reminderContainer, { backgroundColor: colors.cardBackground }]}>
-                  <View style={styles.reminderInfo}>
-                    <Text style={[styles.descricao, { color: colors.text }]}>{item.descricao}</Text>
-                    <Text style={[styles.date, { color: colors.text }]}>
-                      Data: {formatDate(item.dataCadastro)}
-                    </Text>
-                  </View>
-                  <TouchableOpacity onPress={() => handleOpenBottomSheet(item.id, item.descricao)}>
-                    <EllipsisVertical size={25} color={colors.icon} style={styles.chevronIcon} />
-                  </TouchableOpacity>
+            showsVerticalScrollIndicator={false}
+            data={filteredReminders}
+            keyExtractor={(item) => item.id}
+            keyboardShouldPersistTaps="handled"
+            renderItem={({ item }) => (
+              <View style={[styles.reminderContainer, { backgroundColor: colors.cardBackground }]}>
+                <View style={styles.reminderInfo}>
+                  <Text style={[styles.descricao, { color: colors.text }]}>{item.descricao}</Text>
+                  <Text style={[styles.date, { color: colors.text }]}>
+                    Data a notificar: {formatDate(item.dataCadastro)}
+                  </Text>
                 </View>
-              )}
-              ListFooterComponent={<View style={{ height: 75 }} />}
-            />
+                <TouchableOpacity 
+                  onPress={() => {
+                    Keyboard.dismiss(); 
+                    handleOpenBottomSheet(item.id, item.descricao);
+                  }}
+                >
+                  <EllipsisVertical size={25} color={colors.icon} style={styles.chevronIcon} />
+                </TouchableOpacity>
+              </View>
+            )}
+            ListEmptyComponent={() => (
+              <View style={styles.emptyContent}>
+                <Text style={[styles.noResults, { color: colors.text }]}>Nenhum lembrete encontrado.</Text>
+              </View>
+            )}
+            ListFooterComponent={<View style={{ height: 75 }} />}
+          />
+          
           )}
 
           <ConfirmModal
@@ -316,7 +311,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.01)', // Cor de fundo semitransparente
+    backgroundColor: 'rgba(0, 0, 0, 0.01)',
     zIndex: 1,
   },
   reminderContainer: {
@@ -338,5 +333,10 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 14,
+  },
+  emptyContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

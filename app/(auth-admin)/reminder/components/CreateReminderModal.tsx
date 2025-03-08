@@ -1,138 +1,258 @@
-import { useState } from "react";
-import {
-  Modal,
-  View,
-  Text,
-  TextInput,
+import React, { useState, useRef, useContext, useEffect } from 'react';
+import { 
+  Modal, 
+  View, 
+  Text, 
   TouchableOpacity,
-  StyleSheet,
-  Alert,
-  KeyboardAvoidingView,
-  Platform
-} from "react-native";
-import { X } from "lucide-react-native";
-import { api } from "../../../../src/services/api";
-import { useTheme } from "../../../../src/context/ThemeContext";
-import { Colors } from "../../../../constants/Colors";
+  Pressable, 
+  StyleSheet, 
+  ActivityIndicator, 
+  TextInput, 
+  Alert, 
+  Platform,
+  FlatList
+} from 'react-native';
+import { Calendar, X } from 'lucide-react-native';
+import { useTheme } from '../../../../src/context/ThemeContext';
+import { Colors } from '../../../../constants/Colors';
+import InputForm from '@/app/components/InputForm';
+import { ThemedText } from '@/components/ThemedText';
+import { AuthContext } from '@/src/context/AuthContext'; 
+import { api } from '@/src/services/api';
+import axios from 'axios';
+import DateTimePicker from '@react-native-community/datetimepicker';
+
+interface Lembrete {
+  descricao: string;
+  dataCadastro: string;
+}
 
 interface CreateReminderModalProps {
   visible: boolean;
   onClose: () => void;
-  updateReminders: () => void;
+  updateReminders?: () => void;
 }
 
-export default function CreateReminderModal({ visible, onClose, updateReminders }: CreateReminderModalProps) {
+const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ visible, onClose, updateReminders }) => {
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
-  const [descricao, setDescricao] = useState("");
-  const [notification, setNotification] = useState("1");
+  const [descricao, setDescricaoLembrete] = useState('');
+  const [dataCadastro, setDataCadastro] = useState(new Date());
   const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const descricaoRef = useRef<TextInput>(null);
 
-  const handleCreateReminder = async () => {
+  const capitalizeFirstLetter = (text: string) => {
+    return text
+      .toLowerCase()
+      .split(" ")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  }
+
+  useEffect(() => {
+    if (visible) {
+      descricaoRef.current?.focus();
+    }
+  }, [visible]);
+
+  const handleAddReminder = async () => {
+    setSubmitted(true);
+
+ 
     if (!descricao.trim()) {
-      Alert.alert("Erro", "A descrição do lembrete é obrigatória.");
+      descricaoRef.current?.focus();
       return;
     }
 
     setLoading(true);
 
     try {
-      await api.post("/reminders", { descricao, notification: Number(notification) });
-      Alert.alert("Sucesso", "Lembrete criado com sucesso!");
-      updateReminders();
-      onClose();
-      setDescricao("");
-      setNotification("1");
-    } catch (error) {
-      Alert.alert("Erro", "Não foi possível criar o lembrete.");
-    } finally {
+      const reminderData: Lembrete = {
+        descricao,
+        dataCadastro: dataCadastro.toISOString(),
+      };
+
+      await api.post('/lembrete', reminderData, {
+       
+      });
+
       setLoading(false);
+      setSubmitted(false);
+      onClose();
+      
+      if (updateReminders) updateReminders();
+
+      setDescricaoLembrete('');
+      setDataCadastro(new Date());
+    } catch (error) {
+      setLoading(false);
+      setSubmitted(false);
+
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.error;
+        Alert.alert('Erro', errorMessage, [{ text: 'OK' }]);
+      } else {
+        Alert.alert('Erro', 'Erro desconhecido. Tente novamente.', [{ text: 'OK' }]);
+      }
+    }
+  };
+
+  const toggleDatePicker = () => {
+    setShowPicker(!showPicker);
+  };
+
+  const onChange = (event: any, selectedDate: Date | undefined) => {
+    if (event.type === 'set' && selectedDate) {
+      const currentDate = selectedDate || dataCadastro;
+      setDataCadastro(currentDate);
+  
+      if (Platform.OS === 'android') {
+        toggleDatePicker();
+      }
+    } else if (event.type === 'dismissed' || !selectedDate) {
+      toggleDatePicker();
     }
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.overlay}>
-        <KeyboardAvoidingView
-          style={[styles.modalContainer, { backgroundColor: colors.background }]}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>Novo Lembrete</Text>
-            <TouchableOpacity onPress={onClose}>
-              <X size={24} color={colors.text} />
-            </TouchableOpacity>
-          </View>
+      <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
+        <FlatList
+          data={[1]}
+          keyExtractor={(item) => item.toString()}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          renderItem={() => (
+            <View style={styles.modalContent}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Cadastrar Lembrete</Text>
+              <InputForm
+                label="Descrição"
+                value={capitalizeFirstLetter(descricao)}
+                placeholder='Descricao do lembrete'
+                onChangeText={setDescricaoLembrete}
+                error={submitted && !descricao.trim() ? 'A descrição é obrigatória' : ''}
+                ref={descricaoRef}
+                autoFocus
+              />
+              {!showPicker && (
+                <Pressable onPress={toggleDatePicker}>
+                  <InputForm
+                    label="Data a notificar"
+                    value={dataCadastro.toLocaleDateString('pt-BR')}
+                    error={submitted && !dataCadastro.toISOString().trim() ? 'A data é obrigatória' : ''}
+                    editable={false}
+                    onPressIn={toggleDatePicker}
+                    onFocus={toggleDatePicker}
+                    rightIcon={<Calendar size={20} color={colors.icon} />}
+                  />
+                </Pressable>
+              )}
+              {showPicker && (
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                  <DateTimePicker
+                    value={dataCadastro}
+                    mode="date"
+                    display={Platform.OS === 'ios' ? 'inline' : 'calendar'}
+                    onChange={onChange}
+                    locale="pt-BR"
+                    style={{
+                      width: '100%',
+                      backgroundColor: theme === 'dark' ? '#2A2D35' : '#2A2D35',
+                      borderRadius: 8,
+                    }}
+                  />
+                  {Platform.OS === 'ios' && (
+                    <View style={{ flexDirection: 'row', gap: 150 }}>
+                      <TouchableOpacity
+                        onPress={() => setShowPicker(false)}
+                        style={[styles.button, styles.confirmButton]}
+                      >
+                        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Confirmar</Text>
+                      </TouchableOpacity>
 
-          <TextInput
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-            placeholder="Descrição do lembrete"
-            placeholderTextColor={colors.placeholder}
-            value={descricao}
-            onChangeText={setDescricao}
-          />
+                      <TouchableOpacity
+                        onPress={toggleDatePicker}
+                        style={[styles.button, styles.cancelButton]}
+                      >
+                        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Cancelar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              )}
 
-          <TextInput
-            style={[styles.input, { borderColor: colors.border, color: colors.text }]}
-            placeholder="Tipo de notificação (1 = diário, 2 = semanal)"
-            placeholderTextColor={colors.placeholder}
-            keyboardType="numeric"
-            value={notification}
-            onChangeText={setNotification}
-          />
-
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: colors.icon }]}
-            onPress={handleCreateReminder}
-            disabled={loading}
-          >
-            <Text style={[styles.buttonText, { color: colors.buttonText }]}>
-              {loading ? "Salvando..." : "Criar Lembrete"}
-            </Text>
-          </TouchableOpacity>
-        </KeyboardAvoidingView>
+              <TouchableOpacity
+                onPress={handleAddReminder}
+                style={[styles.button, loading && styles.disabledButton]}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <ThemedText type="defaultSemiBold" style={styles.buttonText}>
+                    Cadastrar
+                  </ThemedText>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+        />
+        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <X size={30} color={colors.icon} />
+        </TouchableOpacity>
       </View>
     </Modal>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center"
+  modalContainer: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0, 0, 0, 0.6)', 
+    paddingTop: 30 
   },
-  modalContainer: {
-    width: "90%",
-    padding: 20,
-    borderRadius: 10
+  modalContent: { 
+    padding: 20 
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15
+  scrollContent: {
+    paddingBottom: 100, 
+    paddingTop: 10 
   },
-  title: {
-    fontSize: 18,
-    fontWeight: "bold"
+  modalTitle: { 
+    fontSize: 22, 
+    fontWeight: 'bold', 
+    marginBottom: 10, 
+    textAlign: 'center' 
   },
-  input: {
-    width: "100%",
-    padding: 12,
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 12
+  closeButton: { 
+    position: 'absolute', 
+    top: 50, 
+    right: 10, 
+    padding: 10 
   },
-  button: {
-    padding: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 10
+  button: { 
+    marginTop: 10, 
+    backgroundColor: '#ae2121', 
+    borderRadius: 8, 
+    padding: 10, 
+    alignItems: 'center' 
   },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: "bold"
-  }
+  disabledButton: { 
+    backgroundColor: '#7e1a1a' 
+  },
+  buttonText: { 
+    color: '#fff', 
+    fontWeight: 'bold' 
+  },
+  cancelButton: { 
+    backgroundColor: '#7e1a1a' 
+  },
+  confirmButton: { 
+    backgroundColor: '#ae2121' 
+  },
 });
+
+export default CreateReminderModal;
