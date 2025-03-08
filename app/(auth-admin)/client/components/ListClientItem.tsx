@@ -58,12 +58,11 @@ export default function ListClientItem() {
     if (Platform.OS === 'ios') {
       return ['40%', '80%'];
     } else if (Platform.OS === 'android') {
-      return ['30%', '60%', '85%'];  
+      return ['30%', '85%'];  
     } else {
-      return ['31%', '50%', '75%'];
+      return ['40%', '75%'];
     }
   }, []);
-
 
   const [selectedClientId, setSelectedClientId] = useState<string | undefined>(undefined);
   const [selectedClientName, setSelectedClientName] = useState<string | null>(null);
@@ -132,7 +131,6 @@ export default function ListClientItem() {
     setDeleteModalVisible(false); 
     setClientToDelete(null); // 
   };
-
 
   const fetchClients = async () => {
     try {

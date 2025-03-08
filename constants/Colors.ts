@@ -12,7 +12,8 @@ export const Colors = {
     backgroundTab: 'rgba(255, 255, 255, 0.01)', // Branco com 10% de opacidade
     backgroundDarkTab: '#000',
     background: '#fff',
-    bottomSheetBackground: '#cccccc',
+    bottomSheetBackground: '#E2E0DC',
+    bottomSheetLine: '#D1D5DB',
     cardBackground: '#f1f1f1', //DEFINE A COR SE FOR NO MODO ESCURO E A COR BRANCA NAO DA PRA VER A HORA
     tint: tintColorRed,
     vencida: vencidaLight,
@@ -41,6 +42,7 @@ export const Colors = {
     backgroundDarkTab: 'rgba(255, 255, 255, 0.01)',
     background: '#0D0F16', //DEFINE A COR SE FOR NO MODO ESCURO E A COR BRANCA NAO DA PRA VER A HORA
     bottomSheetBackground: '#1A1D22',
+    bottomSheetLine: '#2A2D35',
     cardBackground: '#2A2D35', 
     tint: tintColorRed,
     vencida: vencidaDark,

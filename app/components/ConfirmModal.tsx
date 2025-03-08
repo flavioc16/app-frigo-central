@@ -7,10 +7,10 @@ interface ConfirmModalProps {
   visible: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-  title: string; // Título do modal
-  message: string; // Mensagem do modal
-  confirmText?: string; // Texto do botão de confirmação (opcional)
-  cancelText?: string; // Texto do botão de cancelamento (opcional)
+  title: string; 
+  message: string; 
+  confirmText?: string; 
+  cancelText?: string; 
   idToDelete?: string
 }
 
@@ -20,8 +20,8 @@ export default function ConfirmModal({
   onCancel,
   title,
   message,
-  confirmText = 'Sim', // Valor padrão para o botão de confirmação
-  cancelText = 'Cancelar', // Valor padrão para o botão de cancelamento
+  confirmText = 'Sim',
+  cancelText = 'Cancelar',
 }: ConfirmModalProps) {
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
@@ -34,7 +34,7 @@ export default function ConfirmModal({
           intensity={30} 
           tint={theme === 'dark' ? 'light' : 'dark'}
         >
-          <View style={[styles.modalContent, { backgroundColor: colors.cardBackground }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.bottomSheetBackground }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
             <Text style={[styles.modalText, { color: colors.text }]}>{message}</Text>
 

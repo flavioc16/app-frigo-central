@@ -110,7 +110,7 @@ export default function PaymentModal({
       <TouchableOpacity style={styles.modalContainer} activeOpacity={1} onPress={onClose}>
         <BlurView style={styles.blurView} intensity={30} tint={theme === 'dark' ? 'light' : 'dark'} />
         <Animated.View style={[styles.modalContent, { 
-          backgroundColor: colors.cardBackground, 
+          backgroundColor: colors.bottomSheetBackground, 
           transform: [{ translateY }],
           top: Platform.OS === 'android' ? '40%' : '38%'
         }]}>
@@ -122,7 +122,7 @@ export default function PaymentModal({
           <TextInput
             style={[
               styles.input,
-              { borderColor: colors.border, backgroundColor: colors.cardBackground, color: colors.text }
+              { backgroundColor: colors.cardBackground, color: colors.text }
             ]}
             keyboardType="numeric"
             value={inputValue}
@@ -176,8 +176,7 @@ const styles = StyleSheet.create({
   },
   input: {
     width: '100%',
-    borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 8,
     padding: 10,
     fontSize: 18,
     textAlign: 'center',

@@ -36,7 +36,6 @@ interface ClientBottomSheetProps {
           disappearsOnIndex={-1}
           appearsOnIndex={1}
           opacity={0.5}
-          
         />
       ),
       []
@@ -53,8 +52,8 @@ interface ClientBottomSheetProps {
         }}
         animateOnMount={true} 
         backgroundStyle={{ 
-          backgroundColor: colors.background,
-          borderRadius: 20,
+          backgroundColor: colors.bottomSheetBackground,
+          borderRadius: 30,
         }}
         handleIndicatorStyle={{ 
           backgroundColor: colors.icon,
@@ -72,7 +71,7 @@ interface ClientBottomSheetProps {
           <View
             style={{
               borderBottomWidth: 1,
-              borderBottomColor: colors.cardBackground,
+              borderBottomColor: colors.bottomSheetLine,
               marginTop: 15,
               marginLeft: -30,
               marginRight: -30,

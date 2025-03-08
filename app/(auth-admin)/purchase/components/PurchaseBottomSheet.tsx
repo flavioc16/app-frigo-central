@@ -50,8 +50,8 @@ const PurchaseBottomSheet: React.FC<PurchaseBottomSheetProps> = ({
         }}
         animateOnMount={true} 
         backgroundStyle={{ 
-          backgroundColor: colors.background,
-          borderRadius: 20,
+          backgroundColor: colors.bottomSheetBackground,
+          borderRadius: 30,
         }}
         handleIndicatorStyle={{ 
           backgroundColor: colors.icon,
@@ -65,20 +65,16 @@ const PurchaseBottomSheet: React.FC<PurchaseBottomSheetProps> = ({
               {selectedPurchaseName}
             </Text>
           </View>
-  
           <View
             style={{
               borderBottomWidth: 1,
-              borderBottomColor: colors.cardBackground,
+              borderBottomColor: colors.bottomSheetLine,
               marginTop: 15,
               marginLeft: -30,
               marginRight: -30,
             }}
           />
-  
           <View style={{ marginTop: 20 }}>
-            
-  
             <TouchableOpacity
               style={{
                 flexDirection: 'row',

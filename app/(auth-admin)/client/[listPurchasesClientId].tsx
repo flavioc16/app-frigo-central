@@ -67,16 +67,16 @@ export default function ListPurchasesClientId() {
   const [purchaseId , setPurchaseId] = useState('');
   const [purchaseName, setPurchaseName] = useState<string | null>(null);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+
   const snapPoints = useMemo(() => {
     if (Platform.OS === 'ios') {
       return ['34%', '80%'];
     } else if (Platform.OS === 'android') {
-      return ['30%', '60%', '85%'];  
+      return ['30%', '85%'];  
     } else {
-      return ['31%', '50%', '75%'];
+      return ['35%', '75%'];
     }
   }, []);
-
 
   const handleOpenBottomSheet = useCallback((id: string, name: string) => {
     setPurchaseId(id);
