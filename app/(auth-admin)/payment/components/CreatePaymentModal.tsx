@@ -107,7 +107,7 @@ export default function PaymentModal({
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
-      <TouchableOpacity style={styles.modalContainer} activeOpacity={1} onPress={onClose}>
+      <TouchableOpacity style={styles.modalContainer} activeOpacity={1}>
         <BlurView style={styles.blurView} intensity={30} tint={theme === 'dark' ? 'dark' : 'light'} />
         <Animated.View style={[styles.modalContent, { 
           backgroundColor: colors.bottomSheetBackground, 

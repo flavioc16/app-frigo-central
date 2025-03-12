@@ -11,7 +11,8 @@ import {
   Keyboard,
   Platform,
   TouchableWithoutFeedback,
-  InteractionManager
+  InteractionManager,
+  RefreshControl
 } from "react-native";
 import { Plus, EllipsisVertical, Tag, CreditCard } from "lucide-react-native";
 import { api } from "../../../../src/services/api";
@@ -26,6 +27,7 @@ import CreateProductModal from "./CreateProductModal";
 import EditProductModal from "./EditProductModal";
 import ProductBottomSheet from "./ProductBottomSheet";
 import ConfirmModal from "@/app/components/ConfirmModal";
+import * as Haptics from 'expo-haptics';
 
 export interface Product {
   id: string;
@@ -150,6 +152,13 @@ export default function ListProductItem() {
     await fetchProducts();
   };
 
+  const handleRefresh = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+    }
+    updateProducts();
+  };
+
   const filteredProducts = useMemo(() => {
     if (search.trim() === "") {
       return products;
@@ -248,6 +257,14 @@ export default function ListProductItem() {
                 </View>
               )}
               ListFooterComponent={<View style={{ height: 75 }} />}
+              refreshControl={
+                <RefreshControl
+                  refreshing={loading} 
+                  onRefresh={handleRefresh} 
+                  colors={["#b62828", "#FF4500"]} 
+                  tintColor={colors.tint}
+                />
+              }
             />
           )}
 

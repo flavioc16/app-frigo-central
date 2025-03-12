@@ -10,7 +10,8 @@ import { FlatList,
   Keyboard,
   Platform,
   TouchableWithoutFeedback,
-  InteractionManager 
+  InteractionManager,
+  RefreshControl 
 } from 'react-native';
 import { MapPin, Plus, EllipsisVertical, IdCard, } from "lucide-react-native";
 import { api } from '../../../../src/services/api';
@@ -27,6 +28,7 @@ import EditClientModal from './EditClientModal';
 import ClientBottomSheet from './ClientBottomSheet';
 import ConfirmModal from '@/app/components/ConfirmModal';
 import CreatePurchaseModal from '../../purchase/components/CreatePurchaseModal';
+import * as Haptics from 'expo-haptics';
 
 export interface Client {
   id: string;
@@ -160,9 +162,16 @@ export default function ListClientItem() {
     loadCachedClients();
   }, []);
   
-  const updateClients = async () => {
+const updateClients = async () => {
     await fetchClients();
   };
+
+const handleRefresh = () => {
+  if (Platform.OS === 'ios') {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+  }
+  updateClients();
+};
 
   const filteredClients = useMemo(() => {
     if (search.trim() === '') {
@@ -252,6 +261,14 @@ export default function ListClientItem() {
                 </TouchableOpacity>
               )}
               ListFooterComponent={<View style={{ height: 75 }} />}
+              refreshControl={
+                <RefreshControl
+                  refreshing={loading} 
+                  onRefresh={handleRefresh} 
+                  colors={["#b62828", "#FF4500"]} 
+                  tintColor={colors.tint}
+                />
+              }
             />
           )}
           <ConfirmModal

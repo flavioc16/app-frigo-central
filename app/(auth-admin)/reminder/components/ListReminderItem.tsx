@@ -11,7 +11,8 @@ import {
   Keyboard,
   Platform,
   TouchableWithoutFeedback,
-  InteractionManager
+  InteractionManager,
+  RefreshControl
 } from "react-native";
 import { Plus, EllipsisVertical, CalendarCheck } from "lucide-react-native";
 import { api } from "../../../../src/services/api";
@@ -26,6 +27,7 @@ import EditReminderModal from "../components/EditReminderModal";
 import ReminderBottomSheet from "../components/ReminderBottomSheet";
 import ConfirmModal from "@/app/components/ConfirmModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Haptics from 'expo-haptics';
 
 export interface Reminder {
   id: string;
@@ -153,6 +155,14 @@ export default function ListReminderItem() {
     await fetchReminders();
   };
 
+  const handleRefresh = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+    }
+    updateReminders();
+  };
+  
+
   const filteredReminders = useMemo(() => {
     if (search.trim() === "") {
       return reminders;
@@ -203,42 +213,50 @@ export default function ListReminderItem() {
         {filteredReminders.length === 0 && search.length > 0 ? (
           <ThemedText style={[styles.noResults, { color: colors.text }]}>Nenhum lembrete encontrado.</ThemedText>
         ) : (
-          <FlatList
-            showsVerticalScrollIndicator={false}
-            data={filteredReminders}
-            keyExtractor={(item) => item.id}
-            keyboardShouldPersistTaps="handled"
-            renderItem={({ item }) => (
-              <TouchableOpacity activeOpacity={0.8}>
-                <View style={[styles.reminderContainer, { backgroundColor: colors.cardBackground }]}>
-                  <View style={styles.reminderInfo}>
-                    <Text style={[styles.descricao, { color: colors.text }]}>{item.descricao}</Text>
-                    <View style={styles.dateContainer}>
-                      <CalendarCheck size={16} color={colors.icon} />
-                      <Text style={[styles.date, { color: colors.text }]}>
-                        {` Data a notificar: ${formatDate(item.dataCadastro)}`}
-                      </Text>
+            <FlatList
+              showsVerticalScrollIndicator={false}
+              data={filteredReminders}
+              keyExtractor={(item) => item.id}
+              keyboardShouldPersistTaps="handled"
+              renderItem={({ item }) => (
+                <TouchableOpacity activeOpacity={0.8}>
+                  <View style={[styles.reminderContainer, { backgroundColor: colors.cardBackground }]}>
+                    <View style={styles.reminderInfo}>
+                      <Text style={[styles.descricao, { color: colors.text }]}>{item.descricao}</Text>
+                      <View style={styles.dateContainer}>
+                        <CalendarCheck size={16} color={colors.icon} />
+                        <Text style={[styles.date, { color: colors.text }]}>
+                          {` Data a notificar: ${formatDate(item.dataCadastro)}`}
+                        </Text>
+                      </View>
                     </View>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        Keyboard.dismiss(); 
+                        handleOpenBottomSheet(item.id, item.descricao);
+                      }}
+                    >
+                      <EllipsisVertical size={25} color={colors.icon} style={styles.chevronIcon} />
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity 
-                    onPress={() => {
-                      Keyboard.dismiss(); 
-                      handleOpenBottomSheet(item.id, item.descricao);
-                    }}
-                  >
-                    <EllipsisVertical size={25} color={colors.icon} style={styles.chevronIcon} />
-                  </TouchableOpacity>
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={() => (
+                <View style={styles.emptyContent}>
+                  <Text style={[styles.noResults, { color: colors.text }]}>Nenhum lembrete cadastrado.</Text>
                 </View>
-              </TouchableOpacity>
-            )}
-            ListEmptyComponent={() => (
-              <View style={styles.emptyContent}>
-                <Text style={[styles.noResults, { color: colors.text }]}>Nenhum lembrete encontrado.</Text>
-              </View>
-            )}
-            ListFooterComponent={<View style={{ height: 75 }} />}
-          />
-        )}
+              )}
+              ListFooterComponent={<View style={{ height: 75 }} />}
+              refreshControl={
+                <RefreshControl
+                  refreshing={loading} 
+                  onRefresh={handleRefresh}
+                  colors={["#b62828", "#FF4500"]} 
+                  tintColor={colors.tint}
+                />
+              }
+            />
+          )}
 
           <ConfirmModal
             visible={deleteModalVisible}

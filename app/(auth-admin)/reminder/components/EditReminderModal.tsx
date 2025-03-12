@@ -20,10 +20,11 @@ import { ThemedText } from '@/components/ThemedText';
 import { api } from '@/src/services/api';
 import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { set } from 'date-fns';
+
 
 interface Lembrete {
   descipton: string;
+  notification: boolean;
   dateCreated: string;
 }
 
@@ -78,57 +79,58 @@ const EditReminderModal: React.FC<EditReminderModalProps> = ({ visible, onClose,
 
   const handleEditReminder = async () => {
     setSubmitted(true);
-
+  
     if (!descipton.trim()) {
       descricaoRef.current?.focus();
       return;
     }
-
+  
     setLoadingEdite(true);
-
+  
     try {
-      const reminderData: Lembrete = {
-        descipton,
-        dateCreated: dateCreated.toISOString(),
+      if (!id) {
+        throw new Error("ID do lembrete não fornecido.");
+      }
+  
+      const reminderData = {
+        dataCadastro: dateCreated.toISOString(),
+        descricao: descipton,
+        notification: false,
       };
-
-      await api.put(`/lembrete/${id}`, reminderData);
-
+  
+      const response = await api.put(`/lembrete/${id}`, reminderData);
+  
       setLoadingEdite(false);
       setSubmitted(false);
       onClose();
+  
+      if (updateReminders) {
+        await updateReminders();
+      } 
       
-      if (updateReminders) updateReminders();
-      setId('');
-      setDescriptionReminders('');
-      setDateCreated(new Date());
     } catch (error) {
       setLoadingEdite(false);
       setSubmitted(false);
-
+  
       if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.error;
-        Alert.alert('Erro', errorMessage, [{ text: 'OK' }]);
+        const errorMessage = error.response?.data?.error || "Erro ao editar lembrete.";
+        Alert.alert("Erro", errorMessage);
+        console.error("Erro da API:", error.response?.data);
       } else {
-        Alert.alert('Erro', 'Erro desconhecido. Tente novamente.', [{ text: 'OK' }]);
+        Alert.alert("Erro", "Erro desconhecido. Tente novamente.");
+        console.error("Erro desconhecido:", error);
       }
     }
   };
-
+  
   const toggleDatePicker = () => {
     setShowPicker(!showPicker);
   };
 
-  const onChange = (event: any, selectedDate: Date | undefined) => {
-    if (event.type === 'set' && selectedDate) {
-      const currentDate = selectedDate || dateCreated;
-      setDateCreated(currentDate);
-
-      if (Platform.OS === 'android') {
-        toggleDatePicker();
-      }
-    } else if (event.type === 'dismissed' || !selectedDate) {
-      toggleDatePicker();
+  const onChange = (event: any, selectedDate?: Date) => {
+    if (selectedDate) {
+      setDateCreated(selectedDate);
+      setShowPicker(false); 
     }
   };
 
@@ -142,78 +144,67 @@ const EditReminderModal: React.FC<EditReminderModalProps> = ({ visible, onClose,
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
           renderItem={() => (
-            <View style={styles.modalContent}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Editar Lembrete</Text>
-              <InputForm
-                label="Descrição"
-                value={capitalizeFirstLetter(descipton)}
-                placeholder="Descrição do lembrete"
-                onChangeText={setDescriptionReminders}
-                error={submitted && !descipton.trim() ? 'A descrição é obrigatória' : ''}
-                ref={descricaoRef}
-                autoFocus
-              />
-              {!showPicker && (
-                <Pressable onPress={toggleDatePicker}>
-                  <InputForm
-                    label="Data a notificar"
-                    value={dateCreated.toLocaleDateString('pt-BR')}
-                    error={submitted && !dateCreated.toISOString().trim() ? 'A data é obrigatória' : ''}
-                    editable={false}
-                    onPressIn={toggleDatePicker}
-                    onFocus={toggleDatePicker}
-                    rightIcon={<Calendar size={20} color={colors.icon} />}
-                  />
-                </Pressable>
-              )}
-              {showPicker && (
-                <View style={{ alignItems: 'center', flex: 1 }}>
-                  <DateTimePicker
-                    value={dateCreated}
-                    mode="date"
-                    display={Platform.OS === 'ios' ? 'inline' : 'calendar'}
-                    onChange={onChange}
-                    locale="pt-BR"
-                    style={{
-                      width: '100%',
-                      backgroundColor: theme === 'dark' ? '#2A2D35' : '#2A2D35',
-                      borderRadius: 8,
-                    }}
-                  />
-                  {Platform.OS === 'ios' && (
-                    <View style={{ flexDirection: 'row', gap: 150 }}>
-                      <TouchableOpacity
-                        onPress={() => setShowPicker(false)}
-                        style={[styles.button, styles.confirmButton]}
-                      >
-                        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Confirmar</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        onPress={toggleDatePicker}
-                        style={[styles.button, styles.cancelButton]}
-                      >
-                        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Cancelar</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
-              )}
-
-              <TouchableOpacity
-                onPress={handleEditReminder}
-                style={[styles.button, loadingEdite && styles.disabledButton]}
-                disabled={loadingEdite}
-              >
-                {loadingEdite ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-                    Editar
-                  </ThemedText>
+            loading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color={colors.tint} />
+              </View>
+            ) : (
+              <View style={styles.modalContent}>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Editar Lembrete</Text>
+                <InputForm
+                  label="Descrição"
+                  value={capitalizeFirstLetter(descipton)}
+                  placeholder="Descrição do lembrete"
+                  onChangeText={setDescriptionReminders}
+                  error={submitted && !descipton.trim() ? 'A descrição é obrigatória' : ''}
+                  ref={descricaoRef}
+                  autoFocus
+                />
+                {!showPicker && (
+                  <Pressable onPress={toggleDatePicker}>
+                    <InputForm
+                      label="Data a notificar"
+                      value={dateCreated.toLocaleDateString('pt-BR')}
+                      error={submitted && !dateCreated.toISOString().trim() ? 'A data é obrigatória' : ''}
+                      editable={false}
+                      onPressIn={toggleDatePicker}
+                      onFocus={toggleDatePicker}
+                      rightIcon={<Calendar size={20} color={colors.icon} />}
+                    />
+                  </Pressable>
                 )}
-              </TouchableOpacity>
-            </View>
+                {showPicker && (
+                  <View style={{ alignItems: 'center', flex: 1 }}>
+                    <DateTimePicker
+                      value={dateCreated}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'inline' : 'calendar'}
+                      onChange={onChange}
+                      locale="pt-BR"
+                      style={{
+                        width: '100%',
+                        backgroundColor: colors.background,
+                        borderRadius: 8,
+                      }}
+                    />
+                  </View>
+                )}
+          
+                <TouchableOpacity
+                  onPress={handleEditReminder}
+                  style={[styles.button, loadingEdite && styles.disabledButton]}
+                  disabled={loadingEdite}
+                >
+                  {loadingEdite ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <ThemedText type="defaultSemiBold" style={styles.buttonText}>
+                      Salvar Alterações
+                    </ThemedText>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )
           )}
         />
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -269,6 +260,11 @@ const styles = StyleSheet.create({
   confirmButton: { 
     backgroundColor: '#ae2121' 
   },
+  loadingContainer:{
+    flex: 1,
+    justifyContent: 'center',
+    alignItems:'center'
+  }
 });
 
 export default EditReminderModal;

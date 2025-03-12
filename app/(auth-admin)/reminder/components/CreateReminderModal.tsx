@@ -102,16 +102,10 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ visible, onCl
     setShowPicker(!showPicker);
   };
 
-  const onChange = (event: any, selectedDate: Date | undefined) => {
-    if (event.type === 'set' && selectedDate) {
-      const currentDate = selectedDate || dataCadastro;
-      setDataCadastro(currentDate);
-  
-      if (Platform.OS === 'android') {
-        toggleDatePicker();
-      }
-    } else if (event.type === 'dismissed' || !selectedDate) {
-      toggleDatePicker();
+  const onChange = (event: any, selectedDate?: Date) => {
+    if (selectedDate) {
+      setDataCadastro(selectedDate);
+      setShowPicker(false); // Fecha o picker imediatamente
     }
   };
 
@@ -159,30 +153,11 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ visible, onCl
                     locale="pt-BR"
                     style={{
                       width: '100%',
-                      backgroundColor: theme === 'dark' ? '#2A2D35' : '#2A2D35',
-                      borderRadius: 8,
+                      backgroundColor: colors.background,
                     }}
                   />
-                  {Platform.OS === 'ios' && (
-                    <View style={{ flexDirection: 'row', gap: 150 }}>
-                      <TouchableOpacity
-                        onPress={() => setShowPicker(false)}
-                        style={[styles.button, styles.confirmButton]}
-                      >
-                        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Confirmar</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        onPress={toggleDatePicker}
-                        style={[styles.button, styles.cancelButton]}
-                      >
-                        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Cancelar</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
                 </View>
               )}
-
               <TouchableOpacity
                 onPress={handleAddReminder}
                 style={[styles.button, loading && styles.disabledButton]}
