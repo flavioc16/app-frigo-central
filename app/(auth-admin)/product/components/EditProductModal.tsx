@@ -105,13 +105,17 @@ const EditProductModal: React.FC<EditProductModalProps> = ({ visible, onClose, p
 
     setLoading(true);
 
+    const formatCurrency = (value: string) => {
+      return parseFloat(value.replace(/\./g, '').replace(',', '.')) * 100;
+    };
+
     try {
       const updatedProductData: Product = {
         id: id,
         nome,
         descricao,
-        precoAVista: parseFloat(precoAVista.replace(',', '.')) * 100,
-        precoAPrazo: parseFloat(precoAPrazo.replace(',', '.')) * 100,
+        precoAVista: formatCurrency(precoAVista),
+        precoAPrazo: formatCurrency(precoAPrazo),
       };
 
       await api.put(`/produtos`, updatedProductData);
@@ -224,8 +228,8 @@ const styles = StyleSheet.create({
     textAlign: 'center' 
   },
   scrollContent: {
-    flexGrow: 1, // Permite que o conteúdo cresça
-    paddingBottom: 20, // Espaço extra no final para o teclado
+    flexGrow: 1, 
+    paddingBottom: 20,
   },
   closeButton: { 
     position: 'absolute', 
@@ -249,7 +253,6 @@ const styles = StyleSheet.create({
   },
   loadingIndicator: {
     flex: 1,
-    top: 350
   },
 });
 
