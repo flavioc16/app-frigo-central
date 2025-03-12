@@ -228,7 +228,7 @@ const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({ visible, onCl
                     locale="pt-BR"
                     style={{
                       width: '100%',
-                      backgroundColor: theme === 'dark' ? '#2A2D35' : '#2A2D35',
+                      backgroundColor: colors.background,
                       borderRadius: 8,
                     }}
                   />

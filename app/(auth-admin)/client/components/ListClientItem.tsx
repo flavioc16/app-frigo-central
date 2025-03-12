@@ -12,7 +12,7 @@ import { FlatList,
   TouchableWithoutFeedback,
   InteractionManager 
 } from 'react-native';
-import { Tag, MapPin, Plus, EllipsisVertical, } from "lucide-react-native";
+import { Tag, MapPin, Plus, EllipsisVertical, IdCard, } from "lucide-react-native";
 import { api } from '../../../../src/services/api';
 import { ThemedText } from '../../../../components/ThemedText'; 
 import { useRouter } from 'expo-router';
@@ -26,7 +26,6 @@ import EditClientModal from './EditClientModal';
 import ClientBottomSheet from './ClientBottomSheet';
 import ConfirmModal from '@/app/components/ConfirmModal';
 import CreatePurchaseModal from '../../purchase/components/CreatePurchaseModal';
-import Toast from 'react-native-toast-message';
 
 export interface Client {
   id: string;
@@ -58,7 +57,7 @@ export default function ListClientItem() {
     if (Platform.OS === 'ios') {
       return ['40%', '80%'];
     } else if (Platform.OS === 'android') {
-      return ['30%', '85%'];  
+      return ['40%', '85%'];  
     } else {
       return ['40%', '75%'];
     }
@@ -219,7 +218,7 @@ export default function ListClientItem() {
                     <Text style={[styles.name, { color: colors.text }]}>{item.nome}</Text>
                     {item.referencia && (
                       <View style={styles.infoRow}>
-                        <Tag size={16} color={colors.icon} />
+                        <IdCard size={16} color={colors.icon} />
                         <Text style={[styles.info, { color: colors.text }]}>{item.referencia}</Text>
                       </View>
                     )}

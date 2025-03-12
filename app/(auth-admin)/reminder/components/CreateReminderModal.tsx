@@ -17,7 +17,6 @@ import { useTheme } from '../../../../src/context/ThemeContext';
 import { Colors } from '../../../../constants/Colors';
 import InputForm from '@/app/components/InputForm';
 import { ThemedText } from '@/components/ThemedText';
-import { AuthContext } from '@/src/context/AuthContext'; 
 import { api } from '@/src/services/api';
 import axios from 'axios';
 import DateTimePicker from '@react-native-community/datetimepicker';

@@ -31,18 +31,16 @@ export default function ConfirmModal({
       <View style={styles.modalContainer}>
         <BlurView 
           style={styles.blurView} 
-          intensity={30} 
-          tint={theme === 'dark' ? 'light' : 'dark'}
+          intensity={30}
+          tint={theme === 'dark' ? 'dark' : 'light'}
         >
           <View style={[styles.modalContent, { backgroundColor: colors.bottomSheetBackground }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>{title}</Text>
             <Text style={[styles.modalText, { color: colors.text }]}>{message}</Text>
-
             <View style={styles.buttonContainer}>
               <TouchableOpacity onPress={onCancel} style={styles.cancelButton}>
                 <Text style={[styles.modalButton, { color: colors.text }]}>{cancelText}</Text>
               </TouchableOpacity>
-
               <TouchableOpacity onPress={onConfirm} style={styles.confirmButton}>
                 <Text style={[styles.modalButton, { color: colors.tint }]}>{confirmText}</Text>
               </TouchableOpacity>

@@ -282,7 +282,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
               <ActivityIndicator size="small" color="#fff" />
             ) : (
               <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-                Atualizar
+                Salvar Alterações
               </ThemedText>
             )}
           </TouchableOpacity>

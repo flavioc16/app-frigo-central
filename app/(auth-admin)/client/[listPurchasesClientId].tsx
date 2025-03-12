@@ -72,7 +72,7 @@ export default function ListPurchasesClientId() {
     if (Platform.OS === 'ios') {
       return ['34%', '80%'];
     } else if (Platform.OS === 'android') {
-      return ['30%', '85%'];  
+      return ['35%', '85%'];  
     } else {
       return ['35%', '75%'];
     }
@@ -187,7 +187,7 @@ export default function ListPurchasesClientId() {
       date = parseISO(dateString);
     } catch (error) {
       console.error("Erro ao analisar a data:", error);
-      return ''; // Se falhar no parse, retorna string vazia
+      return ''; 
     }
 
     // Verifica se a data é válida

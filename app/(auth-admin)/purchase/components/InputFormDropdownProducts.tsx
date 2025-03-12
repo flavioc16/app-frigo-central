@@ -117,7 +117,8 @@ const InputFormDropdownProducts = ({ placeholder = "Selecione um produto...", la
                 }}
               >
                 <Text style={{ color: colors.text, textAlign: 'left' }}>
-                  {item.nome} -{' '}
+                  {item.nome}{item.descricao && item.descricao.trim() ? ` - ${item.descricao.trim()}` : ''} 
+                  {' - '}
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.precoAVista / 100)}
                   {' | '}
                   {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.precoAPrazo / 100)}

@@ -248,7 +248,7 @@ const EditPurchaseModal: React.FC<EditPurchaseModalProps> = ({ onCloseBottomShee
                       locale="pt-BR"
                       style={{
                         width: '100%',
-                        backgroundColor: theme === 'dark' ? '#2A2D35' : '#fff',
+                        backgroundColor: colors.background,
                         borderRadius: 8,
                       }}
                     />
@@ -316,7 +316,7 @@ const EditPurchaseModal: React.FC<EditPurchaseModalProps> = ({ onCloseBottomShee
                     <ActivityIndicator size="small" color="#fff" />
                   ) : (
                     <ThemedText type="defaultSemiBold" style={styles.buttonText}>
-                      Atualizar
+                     Salvar Alterações
                     </ThemedText>
                   )}
                 </TouchableOpacity>
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    paddingTop: 30,
+    paddingTop: 25,
   },
   modalContent: {
     padding: 25,

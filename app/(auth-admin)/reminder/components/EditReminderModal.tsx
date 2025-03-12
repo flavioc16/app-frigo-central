@@ -23,8 +23,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { set } from 'date-fns';
 
 interface Lembrete {
-  descricao: string;
-  dataCadastro: string;
+  descipton: string;
+  dateCreated: string;
 }
 
 interface EditReminderModalProps {
@@ -38,8 +38,8 @@ const EditReminderModal: React.FC<EditReminderModalProps> = ({ visible, onClose,
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
   const [id, setId] = useState('');
-  const [descricao, setDescricaoLembrete] = useState('');
-  const [dataCadastro, setDataCadastro] = useState(new Date());
+  const [descipton, setDescriptionReminders] = useState('');
+  const [dateCreated, setDateCreated] = useState(new Date());
   const [loading, setLoading] = useState(false);
   const [loadingEdite, setLoadingEdite] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -59,8 +59,8 @@ const EditReminderModal: React.FC<EditReminderModalProps> = ({ visible, onClose,
       const reminderData = response.data;
 
       setId(reminderData.id);
-      setDescricaoLembrete(reminderData.descricao);
-      setDataCadastro(new Date(reminderData.dataCadastro));
+      setDescriptionReminders(reminderData.descricao);
+      setDateCreated(new Date(reminderData.dataCadastro));
       setLoading(false);
     } catch (error) {
       setLoading(false);
@@ -79,7 +79,7 @@ const EditReminderModal: React.FC<EditReminderModalProps> = ({ visible, onClose,
   const handleEditReminder = async () => {
     setSubmitted(true);
 
-    if (!descricao.trim()) {
+    if (!descipton.trim()) {
       descricaoRef.current?.focus();
       return;
     }
@@ -88,8 +88,8 @@ const EditReminderModal: React.FC<EditReminderModalProps> = ({ visible, onClose,
 
     try {
       const reminderData: Lembrete = {
-        descricao,
-        dataCadastro: dataCadastro.toISOString(),
+        descipton,
+        dateCreated: dateCreated.toISOString(),
       };
 
       await api.put(`/lembrete/${id}`, reminderData);
@@ -100,8 +100,8 @@ const EditReminderModal: React.FC<EditReminderModalProps> = ({ visible, onClose,
       
       if (updateReminders) updateReminders();
       setId('');
-      setDescricaoLembrete('');
-      setDataCadastro(new Date());
+      setDescriptionReminders('');
+      setDateCreated(new Date());
     } catch (error) {
       setLoadingEdite(false);
       setSubmitted(false);
@@ -121,8 +121,8 @@ const EditReminderModal: React.FC<EditReminderModalProps> = ({ visible, onClose,
 
   const onChange = (event: any, selectedDate: Date | undefined) => {
     if (event.type === 'set' && selectedDate) {
-      const currentDate = selectedDate || dataCadastro;
-      setDataCadastro(currentDate);
+      const currentDate = selectedDate || dateCreated;
+      setDateCreated(currentDate);
 
       if (Platform.OS === 'android') {
         toggleDatePicker();
@@ -146,10 +146,10 @@ const EditReminderModal: React.FC<EditReminderModalProps> = ({ visible, onClose,
               <Text style={[styles.modalTitle, { color: colors.text }]}>Editar Lembrete</Text>
               <InputForm
                 label="Descrição"
-                value={capitalizeFirstLetter(descricao)}
+                value={capitalizeFirstLetter(descipton)}
                 placeholder="Descrição do lembrete"
-                onChangeText={setDescricaoLembrete}
-                error={submitted && !descricao.trim() ? 'A descrição é obrigatória' : ''}
+                onChangeText={setDescriptionReminders}
+                error={submitted && !descipton.trim() ? 'A descrição é obrigatória' : ''}
                 ref={descricaoRef}
                 autoFocus
               />
@@ -157,8 +157,8 @@ const EditReminderModal: React.FC<EditReminderModalProps> = ({ visible, onClose,
                 <Pressable onPress={toggleDatePicker}>
                   <InputForm
                     label="Data a notificar"
-                    value={dataCadastro.toLocaleDateString('pt-BR')}
-                    error={submitted && !dataCadastro.toISOString().trim() ? 'A data é obrigatória' : ''}
+                    value={dateCreated.toLocaleDateString('pt-BR')}
+                    error={submitted && !dateCreated.toISOString().trim() ? 'A data é obrigatória' : ''}
                     editable={false}
                     onPressIn={toggleDatePicker}
                     onFocus={toggleDatePicker}
@@ -169,7 +169,7 @@ const EditReminderModal: React.FC<EditReminderModalProps> = ({ visible, onClose,
               {showPicker && (
                 <View style={{ alignItems: 'center', flex: 1 }}>
                   <DateTimePicker
-                    value={dataCadastro}
+                    value={dateCreated}
                     mode="date"
                     display={Platform.OS === 'ios' ? 'inline' : 'calendar'}
                     onChange={onChange}

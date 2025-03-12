@@ -13,10 +13,9 @@ import {
   TouchableWithoutFeedback,
   InteractionManager
 } from "react-native";
-import { Bell, Plus, EllipsisVertical } from "lucide-react-native";
+import { Plus, EllipsisVertical, CalendarCheck } from "lucide-react-native";
 import { api } from "../../../../src/services/api";
 import { ThemedText } from "../../../../components/ThemedText";
-import { useRouter } from "expo-router";
 import { useTheme } from "../../../../src/context/ThemeContext";
 import { Colors } from "../../../../constants/Colors";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -26,7 +25,7 @@ import CreateReminderModal from "../components/CreateReminderModal";
 import EditReminderModal from "../components/EditReminderModal";
 import ReminderBottomSheet from "../components/ReminderBottomSheet";
 import ConfirmModal from "@/app/components/ConfirmModal";
-import { format, parseISO } from 'date-fns';
+
 
 export interface Reminder {
   id: string;
@@ -42,7 +41,6 @@ export default function ListReminderItem() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const router = useRouter();
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
 
@@ -163,48 +161,53 @@ export default function ListReminderItem() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={[styles.themedContainer, { flex: 1 }]}>
-            <SearchInput 
-                value={search} 
-                onChangeText={setSearch} 
-                placeholder="Buscar por descricao ou data a notificar" 
-            />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={[styles.themedContainer, { flex: 1 }]}>
+        <SearchInput 
+          value={search} 
+          onChangeText={setSearch} 
+          placeholder="Buscar por descricao ou data a notificar" 
+        />
+        
+        <ButtonAdd
+          onPress={() => {
+            Keyboard.dismiss();
+            setModalVisible(true);
+          }}
+          iconRight={<Plus size={24} color={colors.success} />}
+          label="Adicionar Lembrete"
+        />
 
-          <ButtonAdd
-            onPress={() => {
-              Keyboard.dismiss();
-              setModalVisible(true);
-            }}
-            iconRight={<Plus size={24} color={colors.success} />}
-            label="Adicionar Lembrete"
-          />
-
-          {filteredReminders.length === 0 && search.length > 0 ? (
-            <ThemedText style={[styles.noResults, { color: colors.text }]}>Nenhum lembrete encontrado.</ThemedText>
-          ) : (
-            <FlatList
+        {filteredReminders.length === 0 && search.length > 0 ? (
+          <ThemedText style={[styles.noResults, { color: colors.text }]}>Nenhum lembrete encontrado.</ThemedText>
+        ) : (
+          <FlatList
             showsVerticalScrollIndicator={false}
             data={filteredReminders}
             keyExtractor={(item) => item.id}
             keyboardShouldPersistTaps="handled"
             renderItem={({ item }) => (
-              <View style={[styles.reminderContainer, { backgroundColor: colors.cardBackground }]}>
-                <View style={styles.reminderInfo}>
-                  <Text style={[styles.descricao, { color: colors.text }]}>{item.descricao}</Text>
-                  <Text style={[styles.date, { color: colors.text }]}>
-                    Data a notificar: {formatDate(item.dataCadastro)}
-                  </Text>
+              <TouchableOpacity activeOpacity={0.8}>
+                <View style={[styles.reminderContainer, { backgroundColor: colors.cardBackground }]}>
+                  <View style={styles.reminderInfo}>
+                    <Text style={[styles.descricao, { color: colors.text }]}>{item.descricao}</Text>
+                    <View style={styles.dateContainer}>
+                      <CalendarCheck size={16} color={colors.icon} />
+                      <Text style={[styles.date, { color: colors.text }]}>
+                        {` Data a notificar: ${formatDate(item.dataCadastro)}`}
+                      </Text>
+                    </View>
+                  </View>
+                  <TouchableOpacity 
+                    onPress={() => {
+                      Keyboard.dismiss(); 
+                      handleOpenBottomSheet(item.id, item.descricao);
+                    }}
+                  >
+                    <EllipsisVertical size={25} color={colors.icon} style={styles.chevronIcon} />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity 
-                  onPress={() => {
-                    Keyboard.dismiss(); 
-                    handleOpenBottomSheet(item.id, item.descricao);
-                  }}
-                >
-                  <EllipsisVertical size={25} color={colors.icon} style={styles.chevronIcon} />
-                </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             )}
             ListEmptyComponent={() => (
               <View style={styles.emptyContent}>
@@ -213,8 +216,7 @@ export default function ListReminderItem() {
             )}
             ListFooterComponent={<View style={{ height: 75 }} />}
           />
-          
-          )}
+        )}
 
           <ConfirmModal
             visible={deleteModalVisible}
@@ -270,6 +272,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  reminderInfo: {
+    flex: 1,
+  },
+  descricao: {
+    marginBottom: 4,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  dateContainer: {
+    flexDirection: 'row',
+    marginBlockStart: 4,
+  },
+  date: {
+    fontSize: 14,
+  },
   clientInfo: {
     flex: 1,
   },
@@ -323,17 +340,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  reminderInfo: {
-    flex: 1,
-  },
-  descricao: {
-    marginBottom: 4,
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  date: {
-    fontSize: 14,
-  },
+
   emptyContent: {
     flex: 1,
     justifyContent: "center",

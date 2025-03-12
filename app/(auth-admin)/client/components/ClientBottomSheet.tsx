@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { BottomSheetModal, BottomSheetBackdrop, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { Colors } from '../../../../constants/Colors';
-import { Plus, ShoppingCart, UserRoundPen, Trash2 } from "lucide-react-native";
+import { Plus, ShoppingBasket, UserRoundPen, Trash2 } from "lucide-react-native";
 
 interface ClientBottomSheetProps {
     selectedClientId: string | undefined;
@@ -93,7 +93,7 @@ interface ClientBottomSheetProps {
               onPress={() => selectedClientId && onAddPurchase(selectedClientId)}
             >
               <Text style={{ color: colors.icon, fontSize: 17 }}>Adicionar Compra</Text>
-              <Plus size={26} color={colors.success} />
+              <Plus size={26} color={colors.icon} />
             </TouchableOpacity>
   
             <TouchableOpacity
@@ -110,7 +110,7 @@ interface ClientBottomSheetProps {
               onPress={() => selectedClientId && onViewPurchases(selectedClientId)}
             >
               <Text style={{ color: colors.icon, fontSize: 17 }}>Ver Compras</Text>
-              <ShoppingCart size={24} color={colors.icon} />
+              <ShoppingBasket size={24} color={colors.icon} />
             </TouchableOpacity>
   
             <TouchableOpacity

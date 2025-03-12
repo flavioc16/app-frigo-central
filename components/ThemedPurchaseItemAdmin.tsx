@@ -21,8 +21,8 @@ export default function ThemedPurchaseItemAdmin({
   isVencida,
   onOptionsPress,
 }: ThemedPurchaseItemProps) {
-  
-  // Função para formatar data
+
+
   const formatDate = (date: string) => {
     const formattedDate = new Date(date);
     return formattedDate.toLocaleDateString("pt-BR", {
@@ -56,7 +56,7 @@ export default function ThemedPurchaseItemAdmin({
             </Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.iconContainer} onPress={() => onOptionsPress?.(id, descricaoCompra)}>
+        <TouchableOpacity onPress={() => onOptionsPress?.(id, descricaoCompra)}>
           <MoreVertical size={24} color={colors.icon} />
         </TouchableOpacity>
       </View>
@@ -98,7 +98,5 @@ const styles = StyleSheet.create({
   icon: {
     marginRight: 6,
   },
-  iconContainer: {
-    padding: 8,
-  },
+  
 });
