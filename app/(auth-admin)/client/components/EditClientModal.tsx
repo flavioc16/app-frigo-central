@@ -129,7 +129,6 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
   const handleEditClient = async () => {
     setSubmitted(true);
   
-    // Validações dos campos
     if (!name.trim()) {
       nameRef.current?.focus();
       return;
@@ -186,9 +185,7 @@ const EditClientModal: React.FC<EditClientModalProps> = ({ visible, onClose, upd
       onClose();
       updateClients();
   
-      Alert.alert('Tudo certo!', `${response.data.nome} editado com sucesso.`, [
-        { text: 'OK' }
-      ]);
+
   
     } catch (error) {
       setLoading(false);

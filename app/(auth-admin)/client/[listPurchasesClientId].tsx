@@ -74,7 +74,7 @@ export default function ListPurchasesClientId() {
     } else if (Platform.OS === 'android') {
       return ['35%', '85%'];  
     } else {
-      return ['35%', '75%'];
+      return ['40%', '75%'];
     }
   }, []);
 

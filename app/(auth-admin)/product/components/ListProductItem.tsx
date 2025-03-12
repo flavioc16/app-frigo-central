@@ -16,7 +16,7 @@ import {
 import { Plus, EllipsisVertical, Tag, CreditCard } from "lucide-react-native";
 import { api } from "../../../../src/services/api";
 import { ThemedText } from "../../../../components/ThemedText";
-import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../../../../src/context/ThemeContext";
 import { Colors } from "../../../../constants/Colors";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
@@ -51,7 +51,15 @@ export default function ListProductItem() {
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => (Platform.OS === "ios" ? ["28%", "80%"] : ["28%", "85%"]), []);
+  const snapPoints = useMemo(() => {
+    if (Platform.OS === 'ios') {
+      return ['25%', '80%'];
+    } else if (Platform.OS === 'android') {
+      return ['35%', '85%'];  
+    } else {
+      return ['30%', '75%'];
+    }
+  }, []);
 
   const [selectedProductId, setSelectedProductId] = useState<string | undefined>(undefined);
   const [selectedProductDesc, setSelectedProductDesc] = useState<string | null>(null);
@@ -109,18 +117,33 @@ export default function ListProductItem() {
   };
 
   const fetchProducts = async () => {
+    setError(null);
+  
     try {
       const response = await api.get<Product[]>("/produtos");
       setProducts(response.data);
+      
+      // Salva os produtos no AsyncStorage para evitar recarregamento
+      await AsyncStorage.setItem("cachedProducts", JSON.stringify(response.data));
     } catch (err) {
       setError("Erro ao buscar produtos.");
     } finally {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
-    fetchProducts();
+    const loadCachedProducts = async () => {
+      const cachedData = await AsyncStorage.getItem("cachedProducts");
+      if (cachedData) {
+        setProducts(JSON.parse(cachedData));
+        setLoading(false);
+      } else {
+        fetchProducts(); 
+      }
+    };
+  
+    loadCachedProducts();
   }, []);
 
   const updateProducts = async () => {

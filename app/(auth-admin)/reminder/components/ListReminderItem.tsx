@@ -25,7 +25,7 @@ import CreateReminderModal from "../components/CreateReminderModal";
 import EditReminderModal from "../components/EditReminderModal";
 import ReminderBottomSheet from "../components/ReminderBottomSheet";
 import ConfirmModal from "@/app/components/ConfirmModal";
-
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface Reminder {
   id: string;
@@ -50,7 +50,15 @@ export default function ListReminderItem() {
   const [reminderToDelete, setReminderToDelete] = useState<string | null>(null);
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const snapPoints = useMemo(() => (Platform.OS === "ios" ? ["28%", "80%"] : ["28%", "85%"]), []);
+  const snapPoints = useMemo(() => {
+      if (Platform.OS === 'ios') {
+        return ['25%', '80%'];
+      } else if (Platform.OS === 'android') {
+        return ['35%', '85%'];  
+      } else {
+        return ['30%', '75%'];
+      }
+    }, []);
 
   const [selectedReminderId, setSelectedReminderId] = useState<string | undefined>(undefined);
   const [selectedReminderDesc, setSelectedReminderDesc] = useState<string | null>(null);
@@ -113,9 +121,13 @@ export default function ListReminderItem() {
   };
 
   const fetchReminders = async () => {
+    setError(null);
+  
     try {
       const response = await api.get<Reminder[]>("/lembretes");
       setReminders(response.data);
+  
+      await AsyncStorage.setItem("cachedReminders", JSON.stringify(response.data));
     } catch (err) {
       setError("Erro ao buscar lembretes.");
     } finally {
@@ -124,8 +136,18 @@ export default function ListReminderItem() {
   };
 
   useEffect(() => {
-    fetchReminders();
-  }, [reminders]);
+    const loadCachedReminders = async () => {
+      const cachedData = await AsyncStorage.getItem("cachedReminders");
+      if (cachedData) {
+        setReminders(JSON.parse(cachedData));
+        setLoading(false);
+      } else {
+        fetchReminders();
+      }
+    };
+  
+    loadCachedReminders();
+  }, []);
 
   const updateReminders = async () => {
     await fetchReminders();

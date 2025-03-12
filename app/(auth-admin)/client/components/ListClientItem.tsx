@@ -12,8 +12,9 @@ import { FlatList,
   TouchableWithoutFeedback,
   InteractionManager 
 } from 'react-native';
-import { Tag, MapPin, Plus, EllipsisVertical, IdCard, } from "lucide-react-native";
+import { MapPin, Plus, EllipsisVertical, IdCard, } from "lucide-react-native";
 import { api } from '../../../../src/services/api';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedText } from '../../../../components/ThemedText'; 
 import { useRouter } from 'expo-router';
 import { useTheme } from '../../../../src/context/ThemeContext';
@@ -59,7 +60,7 @@ export default function ListClientItem() {
     } else if (Platform.OS === 'android') {
       return ['40%', '85%'];  
     } else {
-      return ['40%', '75%'];
+      return ['48%', '75%'];
     }
   }, []);
 
@@ -100,8 +101,8 @@ export default function ListClientItem() {
   
   const handleDeleteClient = (id: string) => {
     bottomSheetRef.current?.close();
-    setClientToDelete(id); // Armazena o ID do cliente a ser excluído
-    setDeleteModalVisible(true); // Abre o modal de confirmação
+    setClientToDelete(id); 
+    setDeleteModalVisible(true); 
   };
 
   const handleConfirmDelete = async () => {
@@ -130,20 +131,33 @@ export default function ListClientItem() {
     setDeleteModalVisible(false); 
     setClientToDelete(null); // 
   };
-
   const fetchClients = async () => {
+    setError(null);
+  
     try {
-      const response = await api.get<Client[]>('/clients');
+      const response = await api.get<Client[]>("/clients");
       setClients(response.data);
+  
+      await AsyncStorage.setItem("cachedClients", JSON.stringify(response.data));
     } catch (err) {
-      setError('Erro ao buscar clientes.');
+      setError("Erro ao buscar clientes.");
     } finally {
       setLoading(false);
     }
   };
   
   useEffect(() => {
-    fetchClients();
+    const loadCachedClients = async () => {
+      const cachedData = await AsyncStorage.getItem("cachedClients");
+      if (cachedData) {
+        setClients(JSON.parse(cachedData));
+        setLoading(false);
+      } else {
+        fetchClients(); 
+      }
+    };
+  
+    loadCachedClients();
   }, []);
   
   const updateClients = async () => {
