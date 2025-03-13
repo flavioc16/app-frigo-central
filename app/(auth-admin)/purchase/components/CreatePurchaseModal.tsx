@@ -56,7 +56,6 @@ const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({ visible, onCl
 
   const [descricaoCompra, setDescricaoCompra] = useState('');
   const [dataDaCompra, setDataDaCompra] = useState(new Date());
-  const [dateOfBirth, setDateOfBirth] = useState<string>('');
   const [totalCompra, setTotalCompra] = useState('');
   const [tipoCompra, setTipoCompra] = useState('');
   const [loading, setLoading] = useState(false);
@@ -107,6 +106,7 @@ const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({ visible, onCl
       descricaoRef.current?.focus();
     }
   }, [visible]);
+
 
   const handleAddPurchase = async () => {
     setSubmitted(true);
@@ -175,20 +175,20 @@ const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({ visible, onCl
   const toggleDatePicker = () => {
     setShowPicker(!showPicker);
   };
-
-  const onChange = (event: any, selectedDate: Date | undefined) => {
-    if (event.type === 'set' && selectedDate) {
-      const currentDate = selectedDate || dataDaCompra;
-      setDataDaCompra(currentDate);
-  
-      if (Platform.OS === 'android') {
-        toggleDatePicker();
-        setDateOfBirth(currentDate.toDateString());
-      }
-    } else if (event.type === 'dismissed' || !selectedDate) {
-      toggleDatePicker();
+  const onChange = (event: any, selectedDate?: Date) => {
+    // Se o evento for do tipo 'dismissed' (fechado), não fazer nada.
+    if (event.type === 'dismissed') {
+      return;
     }
+  
+    const currentDate = selectedDate || dataDaCompra;  // Se nenhuma data for selecionada, mantém a data atual
+    setDataDaCompra(currentDate);  // Atualiza o estado com a data selecionada
+  
+    // Fecha o picker após a seleção
+    setShowPicker(false); 
   };
+  
+  
 
   return (
 
@@ -232,38 +232,7 @@ const CreatePurchaseModal: React.FC<CreatePurchaseModalProps> = ({ visible, onCl
                       borderRadius: 8,
                     }}
                   />
-                  {Platform.OS === 'ios' && (
-                    <View style={{ flexDirection: 'row', gap: 130, marginTop: 10 }}>
-                      <TouchableOpacity
-                        onPress={() => {
-                          setShowPicker(false);
-                          setDateOfBirth(dataDaCompra.toLocaleDateString('pt-BR'));
-                        }}
-                        style={{
-                          backgroundColor: '#ae2121',
-                          borderRadius: 8,
-                          padding: 8,
-                          width: 100,
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Confirmar</Text>
-                      </TouchableOpacity>
-  
-                      <TouchableOpacity
-                        onPress={toggleDatePicker}
-                        style={{
-                          backgroundColor: '#7e1a1a',
-                          borderRadius: 8,
-                          padding: 8,
-                          width: 100,
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Text style={{ color: '#fff', fontWeight: 'bold' }}>Cancelar</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
+                
                 </View>
               )}
 

@@ -14,7 +14,7 @@ import {
   InteractionManager,
   RefreshControl
 } from "react-native";
-import { Plus, EllipsisVertical, CalendarCheck } from "lucide-react-native";
+import { Plus, EllipsisVertical, CalendarCheck, RefreshCcw } from "lucide-react-native";
 import { api } from "../../../../src/services/api";
 import { ThemedText } from "../../../../components/ThemedText";
 import { useTheme } from "../../../../src/context/ThemeContext";
@@ -28,6 +28,7 @@ import ReminderBottomSheet from "../components/ReminderBottomSheet";
 import ConfirmModal from "@/app/components/ConfirmModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from 'expo-haptics';
+import NetInfo from "@react-native-community/netinfo";
 
 export interface Reminder {
   id: string;
@@ -45,12 +46,10 @@ export default function ListReminderItem() {
   const [search, setSearch] = useState("");
   const { theme } = useTheme();
   const colors = Colors[theme] || Colors.light;
-
   const [modalVisible, setModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [reminderToDelete, setReminderToDelete] = useState<string | null>(null);
-
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => {
       if (Platform.OS === 'ios') {
@@ -61,10 +60,9 @@ export default function ListReminderItem() {
         return ['30%', '75%'];
       }
     }, []);
-
   const [selectedReminderId, setSelectedReminderId] = useState<string | undefined>(undefined);
   const [selectedReminderDesc, setSelectedReminderDesc] = useState<string | null>(null);
-
+  const [isConnected, setIsConnected] = useState(true);
   const handleOpenBottomSheet = useCallback((id: string, descricao: string) => {
     InteractionManager.runAfterInteractions(() => {
       setSelectedReminderId(id);
@@ -149,6 +147,15 @@ export default function ListReminderItem() {
     };
   
     loadCachedReminders();
+
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected ?? false);
+        if (state.isConnected) {
+          fetchReminders();
+        }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const updateReminders = async () => {
@@ -188,7 +195,17 @@ export default function ListReminderItem() {
   }
 
   if (error) {
-    return <Text style={[styles.error, { color: colors.error }]}>{error}</Text>;
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={[styles.errorText, { color: colors.error }]}>
+          {error}
+        </Text>
+        <TouchableOpacity style={styles.retryButton} onPress={handleRefresh} activeOpacity={0.8}>
+          <RefreshCcw size={22} color={colors.icon} />
+          <Text style={styles.retryText}>Tentar novamente</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (
@@ -380,10 +397,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-
   emptyContent: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  }, errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    elevation: 3, 
+  },
+  retryText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 15,
   },
 });

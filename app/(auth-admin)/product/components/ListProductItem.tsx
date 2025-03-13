@@ -14,7 +14,7 @@ import {
   InteractionManager,
   RefreshControl
 } from "react-native";
-import { Plus, EllipsisVertical, Tag, CreditCard } from "lucide-react-native";
+import { Plus, EllipsisVertical, Tag, CreditCard, RefreshCcw } from "lucide-react-native";
 import { api } from "../../../../src/services/api";
 import { ThemedText } from "../../../../components/ThemedText";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -28,6 +28,7 @@ import EditProductModal from "./EditProductModal";
 import ProductBottomSheet from "./ProductBottomSheet";
 import ConfirmModal from "@/app/components/ConfirmModal";
 import * as Haptics from 'expo-haptics';
+import NetInfo from "@react-native-community/netinfo";
 
 export interface Product {
   id: string;
@@ -51,6 +52,7 @@ export default function ListProductItem() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [isConnected, setIsConnected] = useState(true);
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => {
@@ -124,8 +126,6 @@ export default function ListProductItem() {
     try {
       const response = await api.get<Product[]>("/produtos");
       setProducts(response.data);
-      
-      // Salva os produtos no AsyncStorage para evitar recarregamento
       await AsyncStorage.setItem("cachedProducts", JSON.stringify(response.data));
     } catch (err) {
       setError("Erro ao buscar produtos.");
@@ -141,11 +141,20 @@ export default function ListProductItem() {
         setProducts(JSON.parse(cachedData));
         setLoading(false);
       } else {
-        fetchProducts(); 
+        fetchProducts();
       }
     };
   
     loadCachedProducts();
+  
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected ?? false);
+      if (state.isConnected) {
+        fetchProducts();
+      }
+    });
+  
+    return () => unsubscribe();
   }, []);
 
   const updateProducts = async () => {
@@ -182,7 +191,17 @@ export default function ListProductItem() {
   }
 
   if (error) {
-    return <Text style={[styles.error, { color: colors.error }]}>{error}</Text>;
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={[styles.errorText, { color: colors.error }]}>
+          {error}
+        </Text>
+        <TouchableOpacity style={styles.retryButton} onPress={handleRefresh} activeOpacity={0.8}>
+          <RefreshCcw size={22} color={colors.icon} />
+          <Text style={styles.retryText}>Tentar novamente</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
   return (
@@ -343,7 +362,7 @@ const styles = StyleSheet.create({
   },
   price: {
     fontSize: 14,
-    marginLeft: 8,  // Distância entre o ícone e o texto
+    marginLeft: 8, 
   },
   noResults: {
     textAlign: 'center',
@@ -361,12 +380,38 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
   error: {
     textAlign: 'center',
     fontSize: 16,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  }
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 15,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    elevation: 3, 
+  },
+  retryText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
 });
 

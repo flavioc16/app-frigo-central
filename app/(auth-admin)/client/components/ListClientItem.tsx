@@ -13,7 +13,7 @@ import { FlatList,
   InteractionManager,
   RefreshControl 
 } from 'react-native';
-import { MapPin, Plus, EllipsisVertical, IdCard, } from "lucide-react-native";
+import { MapPin, Plus, EllipsisVertical, IdCard, RefreshCcw, } from "lucide-react-native";
 import { api } from '../../../../src/services/api';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedText } from '../../../../components/ThemedText'; 
@@ -29,6 +29,7 @@ import ClientBottomSheet from './ClientBottomSheet';
 import ConfirmModal from '@/app/components/ConfirmModal';
 import CreatePurchaseModal from '../../purchase/components/CreatePurchaseModal';
 import * as Haptics from 'expo-haptics';
+import NetInfo from "@react-native-community/netinfo";
 
 export interface Client {
   id: string;
@@ -54,6 +55,7 @@ export default function ListClientItem() {
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
   const [purchaseModalVisible, setPurchaseModalVisible] = useState(false);
   const [purchaseClientId, setPurchaseClientId] = useState<string | string[]>([]);
+  const [isConnected, setIsConnected] = useState(true);
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const snapPoints = useMemo(() => {
@@ -155,11 +157,20 @@ export default function ListClientItem() {
         setClients(JSON.parse(cachedData));
         setLoading(false);
       } else {
-        fetchClients(); 
+        fetchClients();
       }
     };
-  
+
     loadCachedClients();
+
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      setIsConnected(state.isConnected ?? false);
+        if (state.isConnected) {
+          fetchClients();
+        }
+    });
+
+    return () => unsubscribe();
   }, []);
   
 const updateClients = async () => {
@@ -194,9 +205,18 @@ const handleRefresh = () => {
   }
 
   if (error) {
-    return <Text style={[styles.error, { color: colors.error }]}>{error}</Text>;
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={[styles.errorText, { color: colors.error }]}>
+          {error}
+        </Text>
+        <TouchableOpacity style={styles.retryButton} onPress={handleRefresh} activeOpacity={0.8}>
+          <RefreshCcw size={22} color={colors.icon} />
+          <Text style={styles.retryText}>Tentar novamente</Text>
+        </TouchableOpacity>
+      </View>
+    );
   }
-
   
   return (
     <KeyboardAvoidingView
@@ -205,6 +225,7 @@ const handleRefresh = () => {
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View style={[styles.themedContainer, { flex: 1 }]}>
+        {!isConnected && <Text style={styles.offlineText}>Sem conexão com a internet</Text>}
           <SearchInput
             value={search}
             onChangeText={setSearch}
@@ -370,7 +391,43 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.01)', // Cor de fundo semitransparente
+    backgroundColor: 'rgba(0, 0, 0, 0.01)', 
     zIndex: 1,
+  },
+  offlineText: {
+    textAlign: 'center',
+    marginTop: 10,
+    color: 'red',
+  },
+  offlineContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    elevation: 3, 
+  },
+  retryText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 15,
   },
 });

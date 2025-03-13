@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Modal, 
   View, 
@@ -105,7 +105,7 @@ const CreateReminderModal: React.FC<CreateReminderModalProps> = ({ visible, onCl
   const onChange = (event: any, selectedDate?: Date) => {
     if (selectedDate) {
       setDataCadastro(selectedDate);
-      setShowPicker(false); // Fecha o picker imediatamente
+      setShowPicker(false);
     }
   };
 
