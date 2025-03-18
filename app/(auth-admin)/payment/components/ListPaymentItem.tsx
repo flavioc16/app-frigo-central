@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import { useEffect, useState, useMemo} from "react";
 import {
   FlatList,
   View,
@@ -6,22 +6,16 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
-  KeyboardAvoidingView,
-  Keyboard,
+
   Platform,
-  TouchableWithoutFeedback,
-  InteractionManager,
+  
   RefreshControl,
   Pressable
 } from "react-native";
-import { Plus, EllipsisVertical, CalendarCheck, RefreshCcw, Calendar } from "lucide-react-native";
+import {CalendarCheck, RefreshCcw, Calendar } from "lucide-react-native";
 import { api } from "../../../../src/services/api";
-import { ThemedText } from "../../../../components/ThemedText";
 import { useTheme } from "../../../../src/context/ThemeContext";
 import { Colors } from "../../../../constants/Colors";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import ButtonAdd from "@/app/components/ButtonAdd";
 import SearchInput from "@/app/components/SearchInput";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from 'expo-haptics';
@@ -31,56 +25,25 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import DateTimePicker2 from '@react-native-community/datetimepicker';
 
 export interface Cliente {
-    id: string;
-    nome: string;
-    endereco: string;
-    referencia: string;
-    email: string;
-    telefone: string;
-    created_at: string;
-    updated_at: string;
-  }
-  
-  export interface Juros {}
-  
-  export interface Pagamento {
-    id: string;
-    valorPagamento: number;
-    clienteId: string;
-    userId: string;
-    created_at: string;
-    updated_at: string;
-    compraId: string;
-  }
-  
-  export interface Compra {
-    id: string;
-    descricaoCompra: string;
-    totalCompra: number;
-    valorInicialCompra: number;
-    tipoCompra: number;
-    statusCompra: number;
-    created_at: string;
-    updated_at: string;
-    dataDaCompra: string;
-    dataVencimento: string;
-    isVencida: number;
-    userId: string;
-    clienteId: string;
-    pagamentoId: string | null;
-    cliente: Cliente;
-    juros: Juros[];
-    pagamentos: Pagamento[];
-  }
-  
-  export interface RelatorioComprasResponse {
-    compras: Compra[];
-    somaTotalCompras: number;
-  }
-  
+  nome: string;
+  referencia: string;
+}
 
+export interface Pagamento {
+  id: string;
+  created_at: string;
+  valorPagamento: number;
+  cliente: Cliente;
+}
+
+export interface DadosPagamentos {
+  pagamentos: Pagamento[];
+  totalPagamentos: number;
+}
+  
   export default function ListReportItem() {
-    const [reports, setReports] = useState<Compra[]>([]);
+    const [pagamentos, setPagamentos] = useState<Pagamento[]>([]);
+    const [totalPagamentos, setTotalPagamentos] = useState(0);
     const [somaTotal, setSomaTotal] = useState(0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -124,23 +87,25 @@ export interface Cliente {
         }
     };
 
-    const fetchReports = async () => {
+    const fetchPagamentos = async () => {
       setError(null);
-  
       try {
-        const response = await api.get<RelatorioComprasResponse>("/relatorio/compras", {
+       
+        const formattedDataInicio = dataInicio.toISOString().split("T")[0];
+        const formattedDataFim = dataFim.toISOString().split("T")[0];
+    
+        const response = await api.get<DadosPagamentos>("/pagamentos/entre-datas", {
           params: {
-            dataInicio,
-            dataFim
-          }
+            dataInicio: formattedDataInicio,
+            dataFim: formattedDataFim,
+          },
         });
-  
-        setReports(response.data.compras);
-        setSomaTotal(response.data.somaTotalCompras);
-        await AsyncStorage.setItem("cachedReports", JSON.stringify(response.data.compras));
-  
+    
+        setPagamentos(response.data.pagamentos);
+        setTotalPagamentos(response.data.totalPagamentos);
+        await AsyncStorage.setItem("cachedPagamentos", JSON.stringify(response.data.pagamentos));
       } catch (err) {
-        setError("Erro ao buscar relatórios.");
+        setError("Erro ao buscar pagamentos.");
       } finally {
         setLoading(false);
       }
@@ -150,10 +115,10 @@ export interface Cliente {
       const loadCachedReports = async () => {
         const cachedData = await AsyncStorage.getItem("cachedReports");
         if (cachedData) {
-          setReports(JSON.parse(cachedData));
+          setPagamentos(JSON.parse(cachedData));
           setLoading(false);
         } else {
-          fetchReports();
+          fetchPagamentos();
         }
       };
   
@@ -161,7 +126,7 @@ export interface Cliente {
   
       const unsubscribe = NetInfo.addEventListener((state) => {
         if (state.isConnected) {
-          fetchReports();
+          fetchPagamentos();
         }
       });
   
@@ -172,18 +137,24 @@ export interface Cliente {
       if (Platform.OS === 'ios') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
       }
-      fetchReports();
+      fetchPagamentos();
     };
   
     const filteredReports = useMemo(() => {
-      if (search.trim() === "") return reports;
-  
+      if (search.trim() === "") return pagamentos; 
+    
       const lowerSearch = search.toLowerCase();
-      return reports.filter(report => 
-        report.descricaoCompra.toLowerCase().includes(lowerSearch) ||
-        report.cliente.nome.toLowerCase().includes(lowerSearch)
+    
+      return pagamentos.filter(payment => 
+        payment.cliente.nome.toLowerCase().includes(lowerSearch) ||  
+        payment.cliente.referencia.toLowerCase().includes(lowerSearch)
+        
       );
-    }, [search, reports]);
+    }, [search, pagamentos]);
+
+    const totalFiltrado = useMemo(() => {
+      return filteredReports.reduce((total, item) => total + item.valorPagamento, 0);
+    }, [filteredReports]);
   
     if (loading) {
       return (
@@ -210,9 +181,8 @@ export interface Cliente {
             <SearchInput 
                 value={search} 
                 onChangeText={setSearch} 
-                placeholder="Buscar por descrição ou cliente" 
+                placeholder="Buscar pagamentos por cliente" 
             />
-  
             <View style={styles.dateInputContainer}>
                 {!showPicker && (
                     <Pressable onPress={toggleDatePicker}>
@@ -276,56 +246,50 @@ export interface Cliente {
             </View>
             {!showPicker && !showPicker2 && (
                 <FlatList
-                    showsVerticalScrollIndicator={false}
-                    data={filteredReports}
-                    keyExtractor={(item) => item.id}
-                    maxToRenderPerBatch={10}
-                    renderItem={({ item }) => (
-                    <TouchableOpacity activeOpacity={0.8}>
-                        <View style={[styles.reportContainer, { 
-                            backgroundColor: item.isVencida === 1 
-                                ? colors.error 
-                                : item.statusCompra === 1 
-                                ? colors.success 
-                                : colors.cardBackground 
-                            }]}>
-                            <View style={styles.reportInfo}>
-                                <Text style={[styles.client, { color: colors.text }]}>
-                                    {`${item.cliente.nome}`}
-                                </Text>
-                                <View style={styles.dateContainer}>
-                                    <CalendarCheck size={16} color={colors.icon} />
-                                    <Text style={[styles.date, { color: colors.text }]}>
-                                        {formatDate(item.dataDaCompra)}
-                                    </Text>
-                                </View>
-                                <Text style={[styles.descricao, { color: colors.text }]}>
-                                    {item.descricaoCompra}
-                                </Text>
-                                
-                                <Text style={[styles.valorCompra, { color: colors.text }]}>
-                                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.totalCompra)}
-                                </Text>
-                                
-                            </View>
+                showsVerticalScrollIndicator={false}
+                data={filteredReports}
+                keyExtractor={(item) => item.id}
+                maxToRenderPerBatch={10}
+                renderItem={({ item }) => (
+                  <TouchableOpacity activeOpacity={0.8}>
+                    <View style={[styles.reportContainer, { backgroundColor: colors.cardBackground }]}>
+                      <View style={styles.reportInfo}>
+                        <Text style={[styles.client, { color: colors.text }]}>
+                          {item.cliente?.nome} - {item.cliente?.referencia}
+                        </Text>
+                        <View style={styles.dateContainer}>
+                          <CalendarCheck size={16} color={colors.icon} />
+                          <Text style={[styles.date, { color: colors.text }]}>
+                            {item.created_at ? formatDate(item.created_at) : "Data inválida"}
+                          </Text>
                         </View>
-                    </TouchableOpacity>
-                    )}
-                
-                    refreshControl={
-                    <RefreshControl
-                        refreshing={loading} 
-                        onRefresh={handleRefresh}
-                        colors={["#b62828", "#FF4500"]} 
-                        tintColor={colors.tint}
-                    />
-                    }
-                />
+                        <Text style={[styles.valorCompra, { color: colors.text }]}>
+                          {item.valorPagamento
+                            ? new Intl.NumberFormat("pt-BR", {
+                                style: "currency",
+                                currency: "BRL",
+                              }).format(item.valorPagamento)
+                            : "R$ 0,00"}
+                        </Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                )}
+                refreshControl={
+                  <RefreshControl
+                    refreshing={loading}
+                    onRefresh={handleRefresh}
+                    colors={["#b62828", "#FF4500"]}
+                    tintColor={colors.tint}
+                  />
+                }
+              />
+                           
             )}
             {!showPicker && filteredReports.length > 0 && !showPicker2 && (
-                <Text style={[styles.totalText, { color: colors.text }]}>
-                    Total em relatório: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(somaTotal)}
-                </Text>
+              <Text style={[styles.totalText, { color: colors.text }]}>
+                Total em pagamento: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalFiltrado)}
+              </Text>
             )}
         </View>
     );

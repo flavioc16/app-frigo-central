@@ -2,7 +2,7 @@ import { StyleSheet, Text, View, Switch, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../../src/context/ThemeContext'; 
 import { Colors } from '../../../constants/Colors'; 
 import ConfirmModal from '../../components/ConfirmModal';
-import { useContext, useState, useCallback } from 'react';
+import { useContext, useState } from 'react';
 import { AuthContext } from '@/src/context/AuthContext';
 import { LogOut } from 'lucide-react-native';
 

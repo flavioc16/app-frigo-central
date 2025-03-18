@@ -68,12 +68,19 @@ export default function RootLayout() {
               headerLeft: () => <BackButton />,
           }}
         />
-    
         <Stack.Screen
           name="home/ModalConfig"
           options={{
             headerShown: true,
             title: 'Configurações',
+            presentation: 'modal',
+          }}
+        />
+        <Stack.Screen
+          name="home/Notifications"
+          options={{
+            headerShown: true,
+            title: 'Notificações',
             presentation: 'modal',
           }}
         />
