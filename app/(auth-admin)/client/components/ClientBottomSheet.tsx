@@ -48,7 +48,7 @@ interface ClientBottomSheetProps {
         enableDynamicSizing={false}
         backdropComponent={renderBackdrop}
         animationConfigs={{
-          duration: 300, 
+          duration: 300,
         }}
         animateOnMount={true} 
         backgroundStyle={{ 
