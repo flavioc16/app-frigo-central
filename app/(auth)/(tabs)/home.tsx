@@ -1,6 +1,4 @@
 import { StyleSheet, View, Image } from 'react-native';
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -12,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router'; // Importa o useRouter
 
 
-export default function TabOneScreen() {
+export default function HomeScreen() {
   const { user } = useContext(AuthContext);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const router = useRouter(); // Hook para navegação

@@ -7,6 +7,10 @@ import { api } from '../../src/services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ThemedPurchaseItem from '@/components/ThemedPurchaseItem';
 import { useRouter } from 'expo-router';
+import { useTheme } from '../../src/context/ThemeContext';
+import { Colors } from '@/constants/Colors';
+import { RefreshControl } from 'react-native-gesture-handler';
+import * as Haptics from 'expo-haptics';
 
 interface Compra {
   id: string;
@@ -23,14 +27,16 @@ interface Compra {
 }
 
 export default function DetailsScreen() {
-  const { user } = useContext(AuthContext); // Pega o usuário do contexto de autenticação
-  const [currentUser, setCurrentUser] = useState<any>(null); // Armazena o usuário logado
+  const { user } = useContext(AuthContext);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [compras, setCompras] = useState<{ compras: Compra[]; somaTotalCompras: number }>({
     compras: [],
     somaTotalCompras: 0,
   });
-  const [loading, setLoading] = useState(true); // Estado para gerenciar carregamento
-  const router = useRouter(); // Gerencia navegação
+  const [loading, setLoading] = useState(true);
+  const { theme } = useTheme();
+  const colors = Colors[theme];
+  const router = useRouter();
 
   // Buscar usuário do AsyncStorage ou contexto
   useEffect(() => {
@@ -46,45 +52,50 @@ export default function DetailsScreen() {
     fetchUser();
   }, [user]);
 
-  // Buscar as compras
+
+  const handleRefresh = async () => {
+    if (!currentUser?.client || !currentUser?.client[0]?.id) {
+      console.log('Cliente não encontrado ou ID inválido');
+      return;
+    }
+
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await api.get(`/cliente/${currentUser.client[0].id}`, {
+        headers: {
+          Authorization: `Bearer ${currentUser.token}`,
+        },
+      });
+
+      setCompras({
+        compras: response.data.compras,
+        somaTotalCompras: response.data.somaTotalCompras,
+      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error('Erro ao atualizar compras:', error.message);
+      } else {
+        console.error('Erro desconhecido ao atualizar compras');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchCompras = async () => {
-      if (!currentUser?.client || !currentUser?.client[0]?.id) {
-        console.log('Cliente não encontrado ou ID inválido');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const response = await api.get(`/cliente/${currentUser.client[0].id}`, {
-          headers: {
-            Authorization: `Bearer ${currentUser.token}`,
-          },
-        });
-
-        setCompras({
-          compras: response.data.compras,
-          somaTotalCompras: response.data.somaTotalCompras,
-        });
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          console.error('Erro ao buscar compras:', error.message);
-        } else {
-          console.error('Erro desconhecido ao buscar compras');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (currentUser) {
-      fetchCompras();
+      handleRefresh();
     }
   }, [currentUser]);
 
   return (
     <ThemedView style={styles.container}>
-      {loading ? (
+      {loading && compras.compras.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#ae2121" />
         </View>
@@ -111,18 +122,41 @@ export default function DetailsScreen() {
             ListEmptyComponent={
               <ThemedText style={styles.noDataText}>Nenhuma compra encontrada.</ThemedText>
             }
-            contentContainerStyle={compras.compras.length === 0 ? styles.emptyContent : styles.listContent}
+            contentContainerStyle={
+              compras.compras.length === 0 ? styles.emptyContent : styles.listContent
+            }
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={loading}
+                onRefresh={handleRefresh}
+                colors={['#b62828', '#FF4500']}
+                tintColor={colors.tint}
+              />
+            }
           />
         </View>
-        )}
-        {!loading && compras?.somaTotalCompras > 0 && (
-          <ThemedView style={[styles.footer, Platform.OS === 'android' && { marginBottom: 100 }]}>
-            <ThemedText style={styles.footerText}>
-              Total em débitos: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(compras.somaTotalCompras)}
-            </ThemedText>
-          </ThemedView>
-        )}
+      )}
+
+      {!loading && compras?.somaTotalCompras > 0 && (
+        <ThemedView
+          style={[
+            styles.footer,
+            {
+              borderTopColor: colors.border,
+              ...(Platform.OS === 'android' && { marginBottom: 50 }),
+            },
+          ]}
+        >
+          <ThemedText style={styles.footerText}>
+            Total em débitos:{' '}
+            {new Intl.NumberFormat('pt-BR', {
+              style: 'currency',
+              currency: 'BRL',
+            }).format(compras.somaTotalCompras)}
+          </ThemedText>
+        </ThemedView>
+      )}
     </ThemedView>
   );
 }
@@ -130,7 +164,7 @@ export default function DetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'flex-end', // Garantir que o conteúdo ocupe o máximo de espaço possível, mas deixe o rodapé fixo no final
+    justifyContent: 'flex-end',
   },
   loadingContainer: {
     flex: 1,
@@ -139,12 +173,12 @@ const styles = StyleSheet.create({
     marginBottom: 100,
   },
   contentContainer: {
-    flex: 1, // A lista de compras deve ocupar o espaço restante
-    marginBottom: 100, // Espaço para a tab fixa, ajuste conforme necessário
+    flex: 1,
+    marginBottom: 25,
   },
   listContent: {
     paddingHorizontal: 20,
-    paddingBottom: 80, // Espaço para o rodapé
+    paddingBottom: 80,
   },
   emptyContent: {
     flexGrow: 1,
@@ -160,10 +194,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopColor: '#8a8a8a',
     borderTopWidth: 0.5,
     position: 'absolute',
-    bottom: 0, // Fixa o rodapé no final da tela
+    bottom: 0,
     width: '100%',
   },
   footerText: {

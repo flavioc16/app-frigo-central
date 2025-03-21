@@ -5,6 +5,7 @@ import { ThemedView } from '@/components/ThemedView';
 import { AuthContext } from '../../../src/context/AuthContext';
 import { useThemeColor } from '@/hooks/useThemeColor';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ConfirmModal from '@/app/components/ConfirmModal'; // Certifique-se de importar o ConfirmModal
 
 interface Cliente {
   nome: string;
@@ -18,13 +19,13 @@ export default function TabThreeScreen() {
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false); // Controle do estado do modal de confirmação
+  const [loadingAuth, setLoadingAuth] = useState(false);
 
   const borderColor = useThemeColor({}, 'border');
   const backgroundColor = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   const placeholderColor = useThemeColor({}, 'placeholder');
-
-  const [loadingAuth, setLoadingAuth] = useState(false);
 
   useEffect(() => {
     const fetchCliente = async () => {
@@ -62,29 +63,36 @@ export default function TabThreeScreen() {
     setLoadingAuth(false);
   };
 
-  // Função para mascarar o e-mail, mostrando apenas a parte antes do "@" e o primeiro caractere após o "@"
+  const handleConfirmLogout = () => {
+    setShowModal(false); // Fecha o modal
+    handleLogout(); // Realiza o logout
+  };
+
+  const handleCancelLogout = () => {
+    setShowModal(false); 
+  };
+
   const maskEmail = (email: string) => {
     const [localPart, domainPart] = email.split('@');
     if (localPart.length > 2) {
-      const maskedLocal = localPart[0] + '****' + localPart[localPart.length - 1]; // Exemplo de mascarar, mostrando apenas o primeiro e o último caractere
+      const maskedLocal = localPart[0] + '****' + localPart[localPart.length - 1];
       return `${maskedLocal}@${domainPart}`;
     } else {
       return email; // Se o nome local for muito curto, não mascara
     }
   };
+
   const maskPhone = (phone: string) => {
-    // Remove todos os caracteres não numéricos (como espaços, parênteses, traços)
     const cleanedPhone = phone.replace(/\D/g, '');
   
     if (cleanedPhone.length > 4) {
-      // Exibe os dois primeiros números (DDD) e os últimos quatro números, mascara o restante
       const maskedPhone = `${cleanedPhone.slice(0, 2)} ${cleanedPhone.slice(2, 3)}**** ${cleanedPhone.slice(-4)}`;
       return maskedPhone;
     } else {
       return phone; // Se o número for muito curto, não mascara
     }
   };
-  
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
@@ -154,7 +162,7 @@ export default function TabThreeScreen() {
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity 
-              onPress={handleLogout} 
+              onPress={() => setShowModal(true)} 
               style={[styles.button, loadingAuth && styles.disabledButton]} 
               disabled={loadingAuth}
             >
@@ -167,6 +175,17 @@ export default function TabThreeScreen() {
               )}
             </TouchableOpacity>
           </View>
+
+  
+          <ConfirmModal
+            visible={showModal}
+            onConfirm={handleConfirmLogout}
+            onCancel={handleCancelLogout}
+            title="Sair"
+            message="Tem certeza que deseja sair?"
+            confirmText="Sim"
+            cancelText="Cancelar"
+          />
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
