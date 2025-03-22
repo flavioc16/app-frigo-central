@@ -1,4 +1,4 @@
-import React, { useState, useContext, useRef } from 'react';
+import React, { useState, useContext, useRef, useEffect } from 'react';
 import { 
   View, 
   TextInput, 
@@ -19,8 +19,8 @@ import { TouchableWithoutFeedbackWrapper } from '@/src/components/TouchableWitho
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../src/context/ThemeContext';  // Importa o contexto de tema
 import { Colors } from '@/constants/Colors';
-import InputForm from '@/app/components/InputForm';
-
+import * as Notifications from 'expo-notifications';
+import { api } from '../../src/services/api'; // Importe a instância do seu cliente HTTP (axios ou outro)
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -30,6 +30,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
 
   const usernameRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
@@ -43,41 +44,59 @@ export default function LoginScreen() {
   // Cores do tema
   const { border, background, text, placeholder, icon } = colors;
 
+  useEffect(() => {
+    // Obter o token do Expo Push assim que o componente for montado
+    const getPushToken = async () => {
+      try {
+        const token = await Notifications.getExpoPushTokenAsync();
+        setExpoPushToken(token.data);
+      } catch (error) {
+        console.error('Erro ao obter o token do Expo Push:', error);
+      }
+    };
+
+    getPushToken();
+  }, []);
+
   async function handleLogin() {
     setErrorMessage(null);
-  
-    // Validações dos campos
+
     if (!username) {
       setErrorMessage('O campo de usuário precisa ser preenchido.');
       usernameRef.current?.focus();
       return;
     }
-  
+
     if (!password) {
       setErrorMessage('O campo de senha precisa ser preenchido.');
       passwordRef.current?.focus();
       return;
     }
-  
+
     try {
-      // Realiza o login
+     
       await signIn({ username, password });
-  
-      // Verifica se o usuário foi autenticado após o login
+
       const userInfo = await AsyncStorage.getItem('@frigorifico');
       if (userInfo) {
         const parsedUser = JSON.parse(userInfo);
         if (parsedUser?.role) {
           if (parsedUser.role === 'USER') {
-        
-            const clientInfo = parsedUser.client?.[0];  // Pega o primeiro cliente (no caso de um array)
+
+            const clientInfo = parsedUser.client?.[0];  
             if (clientInfo) {
-              await AsyncStorage.setItem('@cliente', JSON.stringify(clientInfo));  // Salva o cliente na AsyncStorage
+              await AsyncStorage.setItem('@cliente', JSON.stringify(clientInfo)); 
             }
-            router.replace('/(auth)/(tabs)/home');  // Caminho para área de cliente
+
+            // Envia o token de push para o backend
+            if (expoPushToken) {
+              await savePushTokenToBackend(parsedUser.id, expoPushToken); 
+            }
+
+            router.replace('/(auth)/(tabs)/home');  
           } else if (parsedUser.role === 'ADMIN') {
-            await AsyncStorage.setItem('@cliente', JSON.stringify({}));  // Salva um objeto vazio para admin
-            router.replace('/(auth-admin)/(tabs)/home');  // Caminho para área de admin
+            await AsyncStorage.setItem('@cliente', JSON.stringify({}));  
+            router.replace('/(auth-admin)/(tabs)/home');
           } else {
             setErrorMessage('Role do usuário não encontrado.');
           }
@@ -86,13 +105,37 @@ export default function LoginScreen() {
         }
       } else {
         setErrorMessage('Usuário não encontrado no armazenamento.');
-        router.replace('/(public)/login');  // Redireciona para o login caso não encontre o usuário
+        router.replace('/(public)/login')
       }
     } catch (error: any) {
       setErrorMessage(error);
     }
   }
 
+  // Envia o token de push para o backend
+  const savePushTokenToBackend = async (userId: string, expoPushToken: string) => {
+    try {
+     
+      if (!userId) {
+        console.error('userId não encontrado!');
+        setErrorMessage('ID de usuário não encontrado.');
+        return;
+      }
+  
+      const url = `https://backend-api-beta-inky.vercel.app/users/${userId}/token`;
+
+      await api.post(
+        url,
+        { expoPushToken }
+        
+      );
+  
+    } catch (error) {
+      console.error('Erro ao salvar o token no backend:', error);
+      setErrorMessage('Erro ao enviar o token. Tente novamente.');
+    }
+  };
+  
   return (
     <View style={[styles.container, { backgroundColor: background, overflow: 'hidden', paddingBottom: Platform.OS === 'ios' ? 100 : 0 }]}> 
       <KeyboardAvoidingView
@@ -236,7 +279,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 20,
     top: '50%',
-    transform: [{ translateY: -18 }],
+    transform: [{ translateY: -18 }], // Ajusta a posição do ícone
     zIndex: 1,
   },
   errorText: {
